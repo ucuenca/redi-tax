@@ -14,20 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.ucuenca.taxonomy.unesco.exceptions;
+package edu.ucuenca.taxonomy.entityrecognition;
+
+import java.util.List;
+import org.openrdf.model.URI;
 
 /**
  *
  * @author Xavier Sumba <xavier.sumba93@ucuenca.ec>
  */
-public class ResourceSizeException extends Exception {
+public interface EntityRecognition {
 
-    public ResourceSizeException() {
-        super();
-    }
+    List<URI> getEntities(String context);
 
-    public ResourceSizeException(String message) {
-        super(message);
-    }
+    List<URI> getEntities(String context, double confidence);
 
 }
