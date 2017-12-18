@@ -44,12 +44,12 @@ import org.slf4j.LoggerFactory;
  * @author Xavier Sumba <xavier.sumba93@ucuenca.ec>
  */
 public class UnescoNomeclature {
-    
+
     private final UnescoNomeclatureConnection unesco;
     private final ValueFactory vf = ValueFactoryImpl.getInstance();
     private final Logger log = LoggerFactory.getLogger(UnescoNomeclature.class);
     private final static String DEFAULT_CONTEXT = "http://skos.um.es/unesco6";
-    
+
     public UnescoNomeclature(UnescoNomeclatureConnection unesco) {
         this.unesco = unesco;
     }
@@ -71,8 +71,8 @@ public class UnescoNomeclature {
                     "SELECT * WHERE { GRAPH ?graph { [] skos:hasTopConcept ?field. }}",
                     DEFAULT_CONTEXT);
             q.setBinding("graph", vf.createURI(DEFAULT_CONTEXT));
-            
-            twoDigit = processQuery(q);
+
+            twoDigit = processQueryURIFields(q);
         } catch (MalformedQueryException ex) {
             log.error("Cannot execute query.", ex);
         }
@@ -87,8 +87,8 @@ public class UnescoNomeclature {
      * @throws RepositoryException
      */
     public List<URI> narrow(URI field) throws RepositoryException {
-        List<URI> resources = new ArrayList(24);
-        
+        List<URI> resources = new ArrayList<>(24);
+
         try {
             TupleQuery q = unesco.getConnection().prepareTupleQuery(
                     QueryLanguage.SPARQL,
@@ -96,8 +96,8 @@ public class UnescoNomeclature {
                     DEFAULT_CONTEXT);
             q.setBinding("graph", vf.createURI(DEFAULT_CONTEXT));
             q.setBinding("f", field);
-            
-            resources = processQuery(q);
+
+            resources = processQueryURIFields(q);
         } catch (MalformedQueryException ex) {
             log.error("Query malformed.", ex);
         }
@@ -120,8 +120,8 @@ public class UnescoNomeclature {
                     DEFAULT_CONTEXT);
             q.setBinding("graph", vf.createURI(DEFAULT_CONTEXT));
             q.setBinding("f", field);
-            
-            List<URI> resources = processQuery(q);
+
+            List<URI> resources = processQueryURIFields(q);
             if (resources.isEmpty()) {
                 return null;
             } else if (resources.size() == 1) {
@@ -134,7 +134,35 @@ public class UnescoNomeclature {
         }
         return null;
     }
-    
+
+    /**
+     * Given a resource return the UNESCO code.
+     *
+     * @param subject
+     * @param field
+     * @return
+     * @throws RepositoryException
+     * @throws ResourceSizeException
+     */
+    public int code(URI subject) throws RepositoryException, ResourceSizeException, QueryEvaluationException {
+        try {
+            TupleQuery q = unesco.getConnection().prepareTupleQuery(
+                    QueryLanguage.SPARQL,
+                    "SELECT * WHERE { GRAPH ?graph { ?subject skos:notation ?code. }}",
+                    DEFAULT_CONTEXT);
+            q.setBinding("graph", vf.createURI(DEFAULT_CONTEXT));
+            q.setBinding("subject", subject);
+
+            TupleQueryResult result = q.evaluate();
+            if (result.hasNext()) {
+                return Integer.parseInt(result.next().getBinding("code").getValue().stringValue());
+            }
+        } catch (MalformedQueryException ex) {
+            log.error("Query malformed.", ex);
+        }
+        return -1;
+    }
+
     public Literal getLabel(URI resource, String lang) throws RepositoryException {
         RepositoryConnection conn = unesco.getConnection();
         try {
@@ -145,7 +173,7 @@ public class UnescoNomeclature {
             );
             q.setBinding("g", vf.createURI(DEFAULT_CONTEXT));
             q.setBinding("field", resource);
-            
+
             TupleQueryResult r = q.evaluate();
             if (r.hasNext()) {
                 return (Literal) r.next().getValue("label");
@@ -155,7 +183,7 @@ public class UnescoNomeclature {
         }
         return null;
     }
-    
+
     public Model getResoureMetadata(URI resource) throws RepositoryException {
         RepositoryConnection connection = unesco.getConnection();
         Model model = new LinkedHashModel();
@@ -174,13 +202,13 @@ public class UnescoNomeclature {
         }
         return model;
     }
-    
-    private List<URI> processQuery(TupleQuery q) throws RepositoryException {
+
+    private List<URI> processQueryURIFields(TupleQuery q) throws RepositoryException {
         RepositoryConnection connection = unesco.getConnection();
         List<URI> resources = new ArrayList();
         try {
             TupleQueryResult result = q.evaluate();
-            
+
             for (BindingSet b : Iterations.asList(result)) {
                 resources.add((URI) b.getValue("field"));
             }

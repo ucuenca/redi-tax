@@ -86,6 +86,7 @@ public class SpotlightRecognition implements EntityRecognition {
     public List<URI> getEntities(String context, double confidence) {
         Preconditions.checkNotNull(context, "context cannot be null");
         Preconditions.checkArgument(!"".equals(context));
+        Preconditions.checkState(confidence >= 0 && confidence <= 1);
 
         try {
             URIBuilder builder = new URIBuilder(SPOTLIGHT_SERVICE);
