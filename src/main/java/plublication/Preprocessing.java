@@ -299,28 +299,5 @@ public class Preprocessing {
 
     }
 
-    /* CONSTRUCT { <http://dbpedia.org/resource/Programming_language>  <http://purl.org/dc/terms/subject> ?subject .\n" +
-     "            <http://dbpedia.org/resource/Programming_language> a ?type . \n" +
-     "            ?subject <http://www.w3.org/2004/02/skos/core#broader> ?bsubject .\n" +
-     "            ?bsubject <http://www.w3.org/2004/02/skos/core#broader> ?bsubject2 . \n" +
-     "            ?bsubject2 <http://www.w3.org/2004/02/skos/core#broader> ?bsubject3 . \n" +
-     "            ?subject <http://www.w3.org/2004/02/skos/core#narrower> ?nsubject .\n" +
-     "            ?subject <http://www.w3.org/2004/02/skos/core#related> ?related  } \n" +
-     "where {\n" +
-     "<http://dbpedia.org/resource/Programming_language> <http://purl.org/dc/terms/subject> ?subject . \n" +
-     "\n" +
-     "<http://dbpedia.org/resource/Programming_language> a ?type .\n" +
-     "\n" +
-     "OPTIONAL { ?subject <http://www.w3.org/2004/02/skos/core#broader> ?bsubject }\n" +
-     "\n" +
-     "OPTIONAL { ?subject <http://www.w3.org/2004/02/skos/core#narrower> ?nsubject }\n" +
-     "\n" +
-     "OPTIONAL {  ?bsubject <http://www.w3.org/2004/02/skos/core#broader> ?bsubject2 }\n" +
-     "\n" +
-     "OPTIONAL { ?bsubject2 <http://www.w3.org/2004/02/skos/core#broader> ?bsubject3 }\n" +
-     "\n" +
-     "OPTIONAL { ?subject <http://www.w3.org/2004/02/skos/core#related> ?related }\n" +
-     "\n" +
-     "\n" +
-     "} limit 1000 */
+   
 }

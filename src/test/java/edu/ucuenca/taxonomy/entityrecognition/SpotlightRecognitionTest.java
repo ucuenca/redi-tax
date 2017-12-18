@@ -32,7 +32,7 @@ public class SpotlightRecognitionTest {
 
     @BeforeClass
     public static void setUpClass() {
-        spotlight = SpotlightRecognition.getInstance();
+       // spotlight = SpotlightRecognition.getInstance();
 
     }
 
