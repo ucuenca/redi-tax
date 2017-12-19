@@ -24,7 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+//import java.util.stream.Collectors;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
@@ -46,8 +46,19 @@ import org.slf4j.LoggerFactory;
  *
  * @author Xavier Sumba <xavier.sumba93@ucuenca.ec>
  */
+
 public class SpotlightRecognition implements EntityRecognition {
 
+    @Override
+    public List<URI> getEntities(String context) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public List<URI> getEntities(String context, double confidence) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+/*
     private final Logger log = LoggerFactory.getLogger(SpotlightRecognition.class);
     private final HttpClient httpclient = HttpClients.createDefault();
     private final ObjectMapper mapper = new ObjectMapper();
@@ -66,12 +77,12 @@ public class SpotlightRecognition implements EntityRecognition {
         return instance;
     }
 
-    @Override
+   /* @Override
     public List<URI> getEntities(String context) {
         return getEntities(context, 0.1);
     }
-
-    @Override
+*/
+  /*  @Override
     public List<URI> getEntities(String context, double confidence) {
         Preconditions.checkNotNull(context, "context cannot be null");
         Preconditions.checkArgument(!"".equals(context));
@@ -110,5 +121,5 @@ public class SpotlightRecognition implements EntityRecognition {
         }
         return Collections.emptyList();
     }
-
+*/
 }
