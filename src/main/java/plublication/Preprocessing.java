@@ -11,6 +11,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.jayway.jsonpath.JsonPath;
+import edu.ucuenca.taxonomy.unesco.tinkerpop.GraphOperations;
 import info.aduna.iteration.Iterations;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -65,6 +66,8 @@ import org.openrdf.repository.sparql.SPARQLRepository;
  * @author joe
  */
 public class Preprocessing {
+    
+    GraphOperations gp = new GraphOperations () ;
 
     private final ValueFactory vf = ValueFactoryImpl.getInstance();
     private final static String DEFAULT_CONTEXT = "https://dbpedia.org/sparql";
@@ -80,7 +83,7 @@ public class Preprocessing {
     }
 
     public Object detectLanguage(String text) throws UnsupportedEncodingException, IOException {
-      //  Preconditions.checkNotNull(text, "It is necessary some text to detect language");
+        //  Preconditions.checkNotNull(text, "It is necessary some text to detect language");
         //  Preconditions.checkArgument(!text.equals(""));
 
         HttpPost post = new HttpPost("http://api.cortical.io/rest/text/detect_language");
@@ -169,7 +172,7 @@ public class Preprocessing {
                 if (entity != null && response.getStatusLine().getStatusCode() == 200) {
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent(), "UTF-8"))) {
                         String jsonResult = reader.readLine();
-                       // Object parserresponse = new JsonParser().parse(jsonResult);
+                        // Object parserresponse = new JsonParser().parse(jsonResult);
 
                         return JsonPath.read(jsonResult, path);
                     }
@@ -237,7 +240,7 @@ public class Preprocessing {
             post.addHeader("Accept", "application/json");
             post.setEntity(new UrlEncodedFormEntity(list, HTTP.UTF_8));
 
-             //return executeService(post, "Resources", "@URI");
+            //return executeService(post, "Resources", "@URI");
             return executeServicePath(post, " $.Resources[*].@URI");
         } catch (URISyntaxException | IOException ex) {
             Logger.getLogger(Preprocessing.class.getName()).log(Level.SEVERE, null, ex);
@@ -256,12 +259,12 @@ public class Preprocessing {
 
         Repository repository = new SPARQLRepository(DEFAULT_CONTEXT);
         try {
-         //  repository = new SPARQLRepository(DEFAULT_CONTEXT);
+            //  repository = new SPARQLRepository(DEFAULT_CONTEXT);
 
             repository.initialize();
             RepositoryConnection connection = repository.getConnection();
 
-        //  String query = "select distinct ?Concept where {[] a ?Concept} LIMIT 100";
+            //  String query = "select distinct ?Concept where {[] a ?Concept} LIMIT 100";
             GraphQuery q = connection.prepareGraphQuery(QueryLanguage.SPARQL, query2, DEFAULT_CONTEXT);
             GraphQueryResult result = q.evaluate();
 
@@ -269,6 +272,7 @@ public class Preprocessing {
                 Statement val = result.next();
                 System.out.println("Actual" + URI);
                 System.out.println(val.getSubject() + " - " + val.getPredicate() + " - " + val.getObject());
+                gp.RDF2Graph (  val.getSubject().stringValue()  ,  val.getPredicate().stringValue() ,  val.getObject().stringValue());
                 if (val.getPredicate().toString().equals("http://purl.org/dc/terms/subject") || val.getPredicate().toString().equals("http://www.w3.org/2004/02/skos/core#broader")) {
                     System.out.println("Cambio" + val.getObject());
                     queryDbpedia(val.getObject().stringValue(), level - 1);
@@ -285,15 +289,6 @@ public class Preprocessing {
     }
 
     public void entitiesEnrichment() throws RepositoryException {
-        Map<String, Double> m = new HashMap <>();
-        m.put("http://purl.org/dc/terms/subject", 1.0);
-        m.put("http://www.w3.org/2004/02/skos/core#broader", 1.0);
-        m.put("http://dbpedia.org/ontology/genre", 0.5);
-        m.put("http://dbpedia.org/ontology/wikiPageRedirects", 0.8);
-        m.put("http://www.w3.org/2004/02/skos/core#related", 1.0);
-        m.put("http://www.w3.org/1999/02/22-rdf-syntax-ns#type", 0.7);
-        m.put("http://www.w3.org/2002/07/owl#Thing", -0.5);
-        
 
         queryDbpedia("http://dbpedia.org/resource/Programming_language", 3);
 
