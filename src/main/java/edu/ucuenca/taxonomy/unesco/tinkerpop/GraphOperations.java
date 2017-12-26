@@ -76,7 +76,8 @@ public class GraphOperations {
 
             return v;
         } else {
-            return g.addV(type).property(T.id, id).next();
+//            return g.addV(type).property(T.id, id).next();
+            return graph.addVertex(T.label, type, T.id, id);
         }
     }
 
@@ -87,7 +88,8 @@ public class GraphOperations {
             v.property(propertyName, pValue);
             return v;
         } else {
-            return g.addV(type).property(T.id, id).property(propertyName, pValue).next();
+//            return g.addV(type).property(T.id, id).property(propertyName, pValue).next();
+            return graph.addVertex(T.label, type, T.id, id, propertyName, pValue);
         }
     }
 

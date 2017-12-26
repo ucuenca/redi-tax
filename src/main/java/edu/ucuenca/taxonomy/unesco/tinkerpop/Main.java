@@ -33,10 +33,10 @@ public class Main {
 //        Configuration config = configs.properties(new File("config.properties"));
         Graph graph = TinkerGraph.open();
         GraphTraversalSource g = graph.traversal();
-        Vertex v1 = g.addV("person").property(T.id, 1).property("name", "marko").property("age", 29).next();
-        Vertex area = g.addV("area").property(T.id, 2).property("name", "skos:120323").next();
-        Vertex otro = g.addV("area").property(T.id, "original").property("name", "skos:120323").next();
-        Vertex subject = g.addV("subject").property(T.id, "dbpedia:programming_languages").next();
+        Vertex v1 = graph.addVertex(T.label, "person", T.id, 1, "name", "marko", "age", 29);
+        Vertex area = graph.addVertex(T.label, "area", T.id, 2, "name", "skos:120323");
+        Vertex otro = graph.addVertex(T.label, "area", T.id, "original", "name", "skos:120323");
+        Vertex subject = graph.addVertex(T.label, "subject", T.id, "dbpedia:programming_languages");
 
         System.out.println(g.V(1).values("name").next());
         System.out.println(g.V(1).next());
@@ -59,11 +59,11 @@ public class Main {
         Graph graphT = IOGraph.read("coco2.graphml");
 
         GraphTraversalSource g1 = graphT.traversal();
-            g1.V("http://dbpedia.org/resource/Computer_science")
-                    .repeat(bothE().bothV().simplePath())
-                    .until(hasId("http://dbpedia.org/resource/Category:XML-based_programming_languages"))
-                    .path().as("p").map(unfold().coalesce(values("weight"), constant(0.0)).sum())
-                    .as("cost").select("cost", "p").limit(10).next(100).stream().forEach(System.out::println);
+        g1.V("http://dbpedia.org/resource/Computer_science")
+                .repeat(bothE().bothV().simplePath())
+                .until(hasId("http://dbpedia.org/resource/Category:XML-based_programming_languages"))
+                .path().as("p").map(unfold().coalesce(values("weight"), constant(0.0)).sum())
+                .as("cost").select("cost", "p").limit(10).next(100).stream().forEach(System.out::println);
 
         String n1 = "http://dbpedia.org/resource/Computer_science";
         String n2 = "http://dbpedia.org/resource/Category:XML-based_programming_languages";

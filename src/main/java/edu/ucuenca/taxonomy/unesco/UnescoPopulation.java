@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.T;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -58,17 +57,18 @@ public class UnescoPopulation {
         String label = unesco.label(uri, "en").getLabel();
         List<URI> entities = recognition.getEntities(label);
         if (!g.V(uri.stringValue()).hasNext()) {
-            g.addV("unesco").property(T.id, uri.stringValue()).property(T.label, label);
+//            g.addV("unesco").property(T.id, uri.stringValue(), T.label, label);
+            
         }
         entities.stream().map((entity) -> {
             if (!g.V(entity.stringValue()).hasNext()) {
-                g.addV("unesco").property(T.id, uri.stringValue()).property(T.label, label);
+//                g.addV("unesco").property(T.id, uri.stringValue()).property(T.label, label);
             }
             return entity;
         }).forEach((entity) -> {
-            g.addE("same as")
-                    .from(g.V(uri.stringValue()).next())
-                    .to(entity.stringValue());
+//            g.addE("same as")
+//                    .from(g.V(uri.stringValue()).next())
+//                    .to(entity.stringValue());
         });
         return entities;
     }

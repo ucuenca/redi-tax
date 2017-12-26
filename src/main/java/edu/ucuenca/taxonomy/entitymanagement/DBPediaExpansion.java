@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
@@ -127,16 +126,16 @@ public class DBPediaExpansion implements EntityExpansion {
                 Vertex v2 = insertV(o, "node");
                 String codeE = getMD5(v1.id().toString() + v2.id().toString() + p);
                 if (!g.E(codeE).hasNext()) {
-                    g.addE(p).from(v1).to(v2)
-                            .property(T.id, codeE)
-                            .property("weight", m.get(stmt.getPredicate()).weight);
+//                    g.addE(p).from(v1).to(v2)
+//                            .property(T.id, codeE)
+//                            .property("weight", m.get(stmt.getPredicate()).weight);
                 }
             } else if (NodeType.Edge == m.get(stmt.getPredicate()).type) {
                 if (g.V(s).hasNext()) {
                     Vertex v = g.V(s).next();
                     v.property(p, o);
                 } else {
-                    g.addV("node").property(T.id, s).property(p, o);
+//                    g.addV("node").property(T.id, s).property(p, o);
                 }
             }
         }
@@ -146,7 +145,8 @@ public class DBPediaExpansion implements EntityExpansion {
         if (g.V(uri).hasNext()) {
             return g.V(uri).next();
         } else {
-            return g.addV(type).property(T.id, uri).next();
+//            return g.addV(type).property(T.id, uri).next();
+            return null;
         }
     }
 
