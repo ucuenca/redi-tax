@@ -16,6 +16,7 @@
  */
 package edu.ucuenca.taxonomy.entityrecognition;
 
+import edu.ucuenca.taxonomy.entitymanagement.SpotlightRecognition;
 import java.util.List;
 import static org.junit.Assert.assertEquals;
 import org.junit.BeforeClass;
@@ -32,7 +33,7 @@ public class SpotlightRecognitionTest {
 
     @BeforeClass
     public static void setUpClass() {
-       // spotlight = SpotlightRecognition.getInstance();
+        spotlight = SpotlightRecognition.getInstance();
 
     }
 

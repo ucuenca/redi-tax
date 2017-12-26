@@ -80,6 +80,56 @@ public class UnescoNomeclature {
     }
 
     /**
+     * Return a list of {@link URI}s for 4-digit codes.
+     *
+     * @see <a href="https://en.wikipedia.org/wiki/UNESCO_nomenclature">UNESCO
+     * Nomenclature two-digit system</a>
+     * @return
+     * @throws RepositoryException
+     */
+    public List<URI> fourDigitResources() throws RepositoryException {
+        RepositoryConnection connection = unesco.getConnection();
+        List<URI> fourDigit = new ArrayList<>(248);
+        try {
+            TupleQuery q = connection.prepareTupleQuery(
+                    QueryLanguage.SPARQL,
+                    "SELECT * WHERE { GRAPH ?graph { [] skos:hasTopConcept [ skos:narrower ?field].}}",
+                    DEFAULT_CONTEXT);
+            q.setBinding("graph", vf.createURI(DEFAULT_CONTEXT));
+
+            fourDigit = processQueryURIFields(q);
+        } catch (MalformedQueryException ex) {
+            log.error("Cannot execute query.", ex);
+        }
+        return fourDigit;
+    }
+
+    /**
+     * Return a list of {@link URI}s for 6-digit codes.
+     *
+     * @see <a href="https://en.wikipedia.org/wiki/UNESCO_nomenclature">UNESCO
+     * Nomenclature two-digit system</a>
+     * @return
+     * @throws RepositoryException
+     */
+    public List<URI> sixDigitResources() throws RepositoryException {
+        RepositoryConnection connection = unesco.getConnection();
+        List<URI> sixDigit = new ArrayList<>(2232);
+        try {
+            TupleQuery q = connection.prepareTupleQuery(
+                    QueryLanguage.SPARQL,
+                    "SELECT * WHERE { GRAPH ?graph { [] skos:hasTopConcept [ skos:narrower [ skos:narrower ?field ]].}}",
+                    DEFAULT_CONTEXT);
+            q.setBinding("graph", vf.createURI(DEFAULT_CONTEXT));
+
+            sixDigit = processQueryURIFields(q);
+        } catch (MalformedQueryException ex) {
+            log.error("Cannot execute query.", ex);
+        }
+        return sixDigit;
+    }
+
+    /**
      * Given a field or resources return a list of children.
      *
      * @param field
@@ -139,12 +189,9 @@ public class UnescoNomeclature {
      * Given a resource return the UNESCO code.
      *
      * @param subject
-     * @param field
      * @return
-     * @throws RepositoryException
-     * @throws ResourceSizeException
      */
-    public int code(URI subject) throws RepositoryException, ResourceSizeException, QueryEvaluationException {
+    public String code(URI subject) {
         try {
             TupleQuery q = unesco.getConnection().prepareTupleQuery(
                     QueryLanguage.SPARQL,
@@ -155,18 +202,21 @@ public class UnescoNomeclature {
 
             TupleQueryResult result = q.evaluate();
             if (result.hasNext()) {
-                return Integer.parseInt(result.next().getBinding("code").getValue().stringValue());
+                return result.next().getBinding("code").getValue().stringValue();
             }
         } catch (MalformedQueryException ex) {
             log.error("Query malformed.", ex);
+        } catch (RepositoryException ex) {
+            log.error("Problem with repository connection.", ex);
+        } catch (QueryEvaluationException ex) {
+            log.error("Cannot evaluate query.", ex);
         }
-        return -1;
+        return null;
     }
 
-    public Literal getLabel(URI resource, String lang) throws RepositoryException {
-        RepositoryConnection conn = unesco.getConnection();
+    public Literal label(URI resource, String lang) {
         try {
-            TupleQuery q = conn.prepareTupleQuery(
+            TupleQuery q = unesco.getConnection().prepareTupleQuery(
                     QueryLanguage.SPARQL,
                     "SELECT ?label WHERE { GRAPH ?g {?field skos:prefLabel ?label.} "
                     + "FILTER langMatches( lang(?label), \"" + lang + "\" )}"
@@ -180,10 +230,19 @@ public class UnescoNomeclature {
             }
         } catch (MalformedQueryException | QueryEvaluationException ex) {
             log.error("Cannot process query.", ex);
+        } catch (RepositoryException ex) {
+            log.error("Repository Exception.", ex);
         }
         return null;
     }
 
+    /**
+     * Returns a dataset with all properties about the resource.
+     *
+     * @param resource
+     * @return
+     * @throws RepositoryException
+     */
     public Model getResoureMetadata(URI resource) throws RepositoryException {
         RepositoryConnection connection = unesco.getConnection();
         Model model = new LinkedHashModel();
@@ -205,7 +264,7 @@ public class UnescoNomeclature {
 
     private List<URI> processQueryURIFields(TupleQuery q) throws RepositoryException {
         RepositoryConnection connection = unesco.getConnection();
-        List<URI> resources = new ArrayList();
+        List<URI> resources = new ArrayList<>();
         try {
             TupleQueryResult result = q.evaluate();
 

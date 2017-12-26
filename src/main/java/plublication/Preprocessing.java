@@ -5,14 +5,13 @@
  */
 package plublication;
 
-import com.google.common.base.Preconditions;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.jayway.jsonpath.JsonPath;
 import edu.ucuenca.taxonomy.unesco.tinkerpop.GraphOperations;
-import info.aduna.iteration.Iterations;
+import edu.ucuenca.taxonomy.unesco.tinkerpop.IOGraph;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -20,40 +19,32 @@ import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
-import org.apache.commons.httpclient.URI;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
+import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.openrdf.model.Statement;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
-import org.openrdf.query.BindingSet;
 import org.openrdf.query.GraphQuery;
 import org.openrdf.query.GraphQueryResult;
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.QueryLanguage;
-import org.openrdf.query.TupleQuery;
-import org.openrdf.query.TupleQueryResult;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -66,8 +57,8 @@ import org.openrdf.repository.sparql.SPARQLRepository;
  * @author joe
  */
 public class Preprocessing {
-    
-    GraphOperations gp = new GraphOperations () ;
+
+    GraphOperations gp = new GraphOperations();
 
     private final ValueFactory vf = ValueFactoryImpl.getInstance();
     private final static String DEFAULT_CONTEXT = "https://dbpedia.org/sparql";
@@ -272,7 +263,10 @@ public class Preprocessing {
                 Statement val = result.next();
                 System.out.println("Actual" + URI);
                 System.out.println(val.getSubject() + " - " + val.getPredicate() + " - " + val.getObject());
-                gp.RDF2Graph (  val.getSubject().stringValue()  ,  val.getPredicate().stringValue() ,  val.getObject().stringValue());
+                gp.RDF2Graph(val.getSubject().stringValue(), val.getPredicate().stringValue(), val.getObject().stringValue());
+                if (URI.equals(val.getObject().stringValue())) {
+                    continue;
+                }
                 if (val.getPredicate().toString().equals("http://purl.org/dc/terms/subject") || val.getPredicate().toString().equals("http://www.w3.org/2004/02/skos/core#broader")) {
                     System.out.println("Cambio" + val.getObject());
                     queryDbpedia(val.getObject().stringValue(), level - 1);
@@ -284,15 +278,27 @@ public class Preprocessing {
             Logger.getLogger(Preprocessing.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             repository.shutDown();
+
         }
 
     }
 
-    public void entitiesEnrichment() throws RepositoryException {
+    public void entitiesEnrichment(String uri) throws RepositoryException {
 
-        queryDbpedia("http://dbpedia.org/resource/Programming_language", 3);
-
+//        queryDbpedia("http://dbpedia.org/resource/Programming_language", 3);
+//        queryDbpedia("http://dbpedia.org/resource/Computer_science", 4);
+        queryDbpedia(uri, 3);
+        IOGraph.write(gp.getGraph(), "coco2.graphml");
     }
 
-   
+    public void entitiesEnrichment(String uri, Graph graph) throws RepositoryException {
+
+//        queryDbpedia("http://dbpedia.org/resource/Programming_language", 3);
+//        queryDbpedia("http://dbpedia.org/resource/Computer_science", 4);
+        gp.setGraph(graph);
+        gp.setG(graph.traversal());
+        queryDbpedia(uri, 3);
+        IOGraph.write(gp.getGraph(), "coco2.graphml");
+    }
+
 }
