@@ -31,7 +31,7 @@ public class StardogConnection implements AutoCloseable {
     private final static String DATABASE = "http://localhost:5820/myDB";
     private final static String USER = "admin";
     private final static String PASSWD = "admin";
-    private final static String BASE_IRI = "http://redi.cedi.edu.ec/resource";
+    private final static String BASE_IRI = "http://redi.cedi.edu.ec/resource/";
     private final static String CONTEXT = "http://redi.cedi.edu.ec/context/redi";
 
     private final Graph graph;
