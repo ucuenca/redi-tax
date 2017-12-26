@@ -125,16 +125,19 @@ public class DBPediaExpansion implements EntityExpansion {
                 Vertex v1 = insertV(s, "node");
                 Vertex v2 = insertV(o, "node");
                 String codeE = getMD5(v1.id().toString() + v2.id().toString() + p);
-                if (!g.E(codeE).hasNext()) {
+                if (!g.E().has("id",codeE ).hasNext()) {
+                       v1.addEdge(p, v2, "id", codeE , "weight", m.get(stmt.getPredicate()).weight);
 //                    g.addE(p).from(v1).to(v2)
 //                            .property(T.id, codeE)
 //                            .property("weight", m.get(stmt.getPredicate()).weight);
                 }
             } else if (NodeType.Edge == m.get(stmt.getPredicate()).type) {
-                if (g.V(s).hasNext()) {
+                if (g.V().has("id",s).hasNext()) {
                     Vertex v = g.V(s).next();
                     v.property(p, o);
                 } else {
+                      Vertex v = insertV (s , "node");
+                      v.property(p, o);
 //                    g.addV("node").property(T.id, s).property(p, o);
                 }
             }
@@ -142,9 +145,10 @@ public class DBPediaExpansion implements EntityExpansion {
     }
 
     private Vertex insertV(String uri, String type) {
-        if (g.V(uri).hasNext()) {
+        if (g.V().has("id", uri).hasNext()) {
             return g.V(uri).next();
         } else {
+            g.getGraph().get().addVertex("id" , uri , "label" , type);
 //            return g.addV(type).property(T.id, uri).next();
             return null;
         }
