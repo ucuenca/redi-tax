@@ -56,7 +56,7 @@ public class RecognizeArea {
             List<URI> selected = uris.stream()
                     .filter(uri -> !g.V(uri.stringValue()).has("expand").hasNext())
                     .collect(Collectors.toList());
-            ex.expand(selected, "keyword");
+            ex.expand(selected);
         }
         Object uri = g.V(indexes.toArray())
                 .repeat(bothE().bothV().simplePath())

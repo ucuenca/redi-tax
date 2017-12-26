@@ -28,7 +28,7 @@ public interface EntityExpansion {
 
     public static int DEFAULT_LVL = 3;
 
-    Graph expand(List<URI> uris, String label, int lvl);
+    Graph expand(List<URI> uris, int lvl);
 
-    Graph expand(List<URI> uris, String label);
+    Graph expand(List<URI> uris);
 }

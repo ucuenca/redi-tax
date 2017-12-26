@@ -155,14 +155,15 @@ public class UnescoNomeclature {
     }
 
     /**
-     * Given a resource return a parent.
+     * Given a resource return a parent. Returns <code>null</code> if there is
+     * not parent.
      *
      * @param field
      * @return
      * @throws RepositoryException
      * @throws ResourceSizeException
      */
-    public URI broad(URI field) throws RepositoryException, ResourceSizeException {
+    public URI broad(URI field) throws ResourceSizeException {
         try {
             TupleQuery q = unesco.getConnection().prepareTupleQuery(
                     QueryLanguage.SPARQL,

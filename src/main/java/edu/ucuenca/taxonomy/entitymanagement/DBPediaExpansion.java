@@ -17,6 +17,7 @@
 package edu.ucuenca.taxonomy.entitymanagement;
 
 import edu.ucuenca.taxonomy.entitymanagement.api.EntityExpansion;
+import edu.ucuenca.taxonomy.unesco.dababase.utils.GraphOperations;
 import static edu.ucuenca.taxonomy.unesco.tinkerpop.GraphOperations.getMD5;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,7 +70,7 @@ public class DBPediaExpansion implements EntityExpansion {
     }
 
     @Override
-    public Graph expand(List<URI> uris, String label, int lvl) {
+    public Graph expand(List<URI> uris, int lvl) {
         Repository repository = null;
         try {
             repository = new SPARQLRepository(DBPEDIA_CONTEXT);
@@ -77,17 +78,14 @@ public class DBPediaExpansion implements EntityExpansion {
             for (URI uri : uris) {
                 queryDbpedia(repository.getConnection(), uri, lvl);
                 Vertex v;
-                if ( !g.V().has("id", uri).hasNext()) {
-                //g.V(uri).property("expand", true).property("type", label);
-                    v = this.insertV(uri.stringValue() , label);
-                  
+                if (!g.V().has("id", uri).hasNext()) {
+                    v = GraphOperations.insertIdV(g, uri.stringValue(), "node");
                 } else {
-                   v = g.V().has("id", uri).next();
+                    v = g.V().has("id", uri).next();
                 }
-                    v.property("expand", true);
+                v.property("expand", true);
             }
-        } catch (Exception ex
-                ) {
+        } catch (Exception ex) {
             log.error("Error executing query", ex);
         } finally {
             try {
@@ -100,8 +98,8 @@ public class DBPediaExpansion implements EntityExpansion {
     }
 
     @Override
-    public Graph expand(List<URI> uris, String label) {
-        return expand(uris, label, DEFAULT_LVL);
+    public Graph expand(List<URI> uris) {
+        return expand(uris, DEFAULT_LVL);
     }
 
     private void queryDbpedia(RepositoryConnection dbpediaConnection, URI uri, int level) throws Exception {
@@ -131,35 +129,25 @@ public class DBPediaExpansion implements EntityExpansion {
             String p = stmt.getPredicate().stringValue();
             String o = stmt.getObject().stringValue();
             if (NodeType.Vertex == m.get(stmt.getPredicate()).type) {
-                Vertex v1 = insertV(s, "node");
-                Vertex v2 = insertV(o, "node");
+                Vertex v1 = GraphOperations.insertIdV(g, s, "node");
+                Vertex v2 = GraphOperations.insertIdV(g, o, "node");
                 String codeE = getMD5(v1.id().toString() + v2.id().toString() + p);
-                if (!g.E().has("id",codeE ).hasNext()) {
-                       v1.addEdge(p, v2, "id", codeE , "weight", m.get(stmt.getPredicate()).weight);
+                if (!g.E().has("id", codeE).hasNext()) {
+                    v1.addEdge(p, v2, "id", codeE, "weight", m.get(stmt.getPredicate()).weight);
 //                    g.addE(p).from(v1).to(v2)
 //                            .property(T.id, codeE)
 //                            .property("weight", m.get(stmt.getPredicate()).weight);
                 }
             } else if (NodeType.Edge == m.get(stmt.getPredicate()).type) {
-                if (g.V().has("id",s).hasNext()) {
+                if (g.V().has("id", s).hasNext()) {
                     Vertex v = g.V(s).next();
                     v.property(p, o);
                 } else {
-                      Vertex v = insertV (s , "node");
-                      v.property(p, o);
+                    Vertex v = GraphOperations.insertIdV(g, s, "node");
+                    v.property(p, o);
 //                    g.addV("node").property(T.id, s).property(p, o);
                 }
             }
-        }
-    }
-
-    private Vertex insertV(String uri, String type) {
-        if (g.V().has("id", uri).hasNext()) {
-            return g.V(uri).next();
-        } else {
-            g.getGraph().get().addVertex("id" , uri , "label" , type);
-//            return g.addV(type).property(T.id, uri).next();
-            return null;
         }
     }
 
