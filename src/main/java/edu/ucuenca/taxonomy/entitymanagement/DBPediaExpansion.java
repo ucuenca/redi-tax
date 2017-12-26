@@ -76,9 +76,18 @@ public class DBPediaExpansion implements EntityExpansion {
             repository.initialize();
             for (URI uri : uris) {
                 queryDbpedia(repository.getConnection(), uri, lvl);
-                g.V(uri).property("expand", true).property("type", label);
+                Vertex v;
+                if ( !g.V().has("id", uri).hasNext()) {
+                //g.V(uri).property("expand", true).property("type", label);
+                    v = this.insertV(uri.stringValue() , label);
+                  
+                } else {
+                   v = g.V().has("id", uri).next();
+                }
+                    v.property("expand", true);
             }
-        } catch (Exception ex) {
+        } catch (Exception ex
+                ) {
             log.error("Error executing query", ex);
         } finally {
             try {
