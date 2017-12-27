@@ -20,11 +20,13 @@ import edu.ucuenca.taxonomy.entitymanagement.DBPediaExpansion;
 import edu.ucuenca.taxonomy.entitymanagement.SpotlightRecognition;
 import edu.ucuenca.taxonomy.entitymanagement.api.EntityExpansion;
 import edu.ucuenca.taxonomy.entitymanagement.api.EntityRecognition;
+import edu.ucuenca.taxonomy.unesco.dababase.StardogConnection;
 import edu.ucuenca.taxonomy.unesco.dababase.utils.GraphOperations;
 import edu.ucuenca.taxonomy.unesco.exceptions.ResourceSizeException;
 import java.util.Collections;
 import java.util.List;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -50,20 +52,22 @@ public class UnescoPopulation {
         this.dbpedia = new DBPediaExpansion(g);
     }
 
-    public void populate() {
+    public Graph populate() throws Exception {
         try (UnescoNomeclatureConnection conn = UnescoNomeclatureConnection.getInstance()) {
             UnescoNomeclature unesco = new UnescoNomeclature(conn);
-            UnescoPopulation.this.populateNodes(unesco.sixDigitResources(), unesco);
+            return populateNodes(unesco.sixDigitResources(), unesco);
         } catch (Exception ex) {
             log.error("Cannot populate Unesco nomenclature", ex);
+            throw ex;
         }
     }
 
-    private void populateNodes(List<URI> unescoURIs, UnescoNomeclature unesco) {
-        unescoURIs.stream()
+    private Graph populateNodes(List<URI> unescoURIs, UnescoNomeclature unesco) {
+        return unescoURIs.stream()
                 .filter(uri -> !unesco.code(uri).contains("99"))
                 .map(uri -> findEntities(uri, unesco))
-                .map(uris -> dbpedia.expand(uris));
+                .map(uris -> dbpedia.expand(uris, 1))
+                .findFirst().orElse(null);
     }
 
     private List<URI> findEntities(URI uri, UnescoNomeclature unesco) {
@@ -75,12 +79,13 @@ public class UnescoPopulation {
             Vertex entityVertex = GraphOperations.insertIdV(g, entity.stringValue(), "node");
             entityVertex.addEdge("sameAs", unescoVertex, "label", label);
             return entity;
-        });
+        }).forEach(entity -> log.info("SPOTLIGTH - [{} SAME AS {}]", unescoVertex, entity));
+
         if (entities.isEmpty()) {
             try {
                 URI parent = unesco.broad(uri);
                 if (parent != null) {
-                    UnescoPopulation.this.populateNodes(Collections.singletonList(parent), unesco);
+                    populateNodes(Collections.singletonList(parent), unesco);
                 }
             } catch (ResourceSizeException ex) {
                 log.error("{} should return only a parent", uri, ex);
@@ -89,52 +94,10 @@ public class UnescoPopulation {
         return entities;
     }
 
-//    public static void main(String[] args) throws Exception {
-//        try (Graph graph = StardogConnection.intance().graph()) {
-//            UnescoPopulation up = new UnescoPopulation(graph.traversal());
-//            up.populate();
-//        }
-////<editor-fold defaultstate="collapsed" desc="some test for unesco nomenclature">
-////        ValueFactory vf = ValueFactoryImpl.getInstance();
-////        URI two_digit = vf.createURI("http://skos.um.es/unesco6/12");
-////        URI four_digit = vf.createURI("http://skos.um.es/unesco6/1203");
-////        URI six_digit = vf.createURI("http://skos.um.es/unesco6/120304");
-////        EntityRecognition sp = SpotlightRecognition.getInstance();
-////
-////        try (UnescoNomeclatureConnection conn = UnescoNomeclatureConnection.getInstance()) {
-////            UnescoNomeclature un = new UnescoNomeclature(conn);
-////            System.out.println();
-////            for (URI field : Arrays.asList(two_digit)) {//un.twoDigitResources()) {
-////                String fieldStr = un.label(field, "en").getLabel();
-////                System.out.print(field);
-////                System.out.println("->" + fieldStr);
-////
-////                for (URI discipline : un.narrow(field)) {
-////                    String disciplineStr = un.label(discipline, "en").getLabel();
-////                    System.out.print("\t" + discipline);
-////                    System.out.println("->" + disciplineStr);
-////
-////                    if (String.valueOf(un.code(discipline)).contains("99")) {
-////                        continue;
-////                    }
-////                    String context = disciplineStr;
-////                    for (URI entity : sp.getEntities(context, 0.15)) {
-////                        System.out.println("\t\t\t" + context + "::" + entity);
-////                    }
-//////                    for (URI subdiscipline : un.narrow(discipline)) {
-//////                        String subdisciplineStr = un.label(subdiscipline, "en").label();
-//////                        System.out.print("\t\t" + subdiscipline);
-//////                        System.out.println("->" + subdisciplineStr);
-//////                        String context = fieldStr + ", " + disciplineStr + ", " + subdisciplineStr;
-//////                        for (URI entity : sp.getEntities(context)) {
-//////                            System.out.println("\t\t\t" + entity);
-//////                        }
-//////                    }
-////                }
-////            }
-////        } catch (Exception ex) {
-////        }
-////</editor-fold>
-//
-//    }
+    public static void main(String[] args) throws Exception {
+        try (Graph graph = StardogConnection.intance().graph()) {
+            UnescoPopulation unesco = new UnescoPopulation(graph.traversal());
+            unesco.populate();
+        }
+    }
 }

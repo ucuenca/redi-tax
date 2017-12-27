@@ -25,12 +25,12 @@ import static org.apache.tinkerpop.gremlin.process.traversal.Order.incr;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.bothE;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.constant;
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.has;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.values;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.URIImpl;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.has;
 
 /**
  *
@@ -39,11 +39,12 @@ import org.openrdf.model.impl.URIImpl;
 public class RecognizeArea {
 
     Graph graph;
-    EntityExpansion ex = new DBPediaExpansion(graph.traversal());
+    EntityExpansion expansion;
     EntityRecognition entityRcgntn = SpotlightRecognition.getInstance();
 
     public RecognizeArea(Graph graph) {
         this.graph = graph;
+        this.expansion = new DBPediaExpansion(graph.traversal());
     }
 
     public URI recognize(List<String> keywords) {
@@ -56,7 +57,7 @@ public class RecognizeArea {
             List<URI> selected = uris.stream()
                     .filter(uri -> !g.V(uri.stringValue()).has("expand").hasNext())
                     .collect(Collectors.toList());
-            ex.expand(selected);
+            expansion.expand(selected);
         }
         Object uri = g.V(indexes.toArray())
                 .repeat(bothE().bothV().simplePath())

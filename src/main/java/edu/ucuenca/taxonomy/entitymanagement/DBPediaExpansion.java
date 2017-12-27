@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -32,7 +31,6 @@ import org.openrdf.model.URI;
 import org.openrdf.model.impl.URIImpl;
 import org.openrdf.query.GraphQueryResult;
 import org.openrdf.query.QueryLanguage;
-import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sparql.SPARQLRepository;
@@ -71,11 +69,16 @@ public class DBPediaExpansion implements EntityExpansion {
 
     @Override
     public Graph expand(List<URI> uris, int lvl) {
-        Repository repository = null;
+        SPARQLRepository repository = null;
+        Map<String, String> additionalHttpHeaders = new HashMap<>();
+        additionalHttpHeaders.put("Accept", "application/ld+json");
+
         try {
             repository = new SPARQLRepository(DBPEDIA_CONTEXT);
+            repository.setAdditionalHttpHeaders(additionalHttpHeaders);
             repository.initialize();
             for (URI uri : uris) {
+                log.info("Expanding {}", uri);
                 queryDbpedia(repository.getConnection(), uri, lvl);
                 Vertex v;
                 if (!g.V().has("id", uri).hasNext()) {
@@ -89,12 +92,14 @@ public class DBPediaExpansion implements EntityExpansion {
             log.error("Error executing query", ex);
         } finally {
             try {
-                repository.shutDown();
+                if (repository != null) {
+                    repository.shutDown();
+                }
             } catch (RepositoryException ex) {
-                java.util.logging.Logger.getLogger(DBPediaExpansion.class.getName()).log(Level.SEVERE, null, ex);
+                log.error("Cannot shutdown repository", ex);
             }
         }
-        return null;
+        return g.getGraph().get();
     }
 
     @Override
@@ -111,17 +116,17 @@ public class DBPediaExpansion implements EntityExpansion {
         GraphQueryResult result = dbpediaConnection.prepareGraphQuery(QueryLanguage.SPARQL, query, DBPEDIA_CONTEXT).evaluate();
         while (result.hasNext()) {
             Statement stmt = result.next();
-            log.info("Actual lvl: {}, Statement: {}", uri, stmt);
+            log.debug("Actual lvl: {}, Statement: {}", uri, stmt);
             registerStatement(stmt);
             if (uri.equals(stmt.getObject())) {
                 continue;
             }
-            if (properties.contains(stmt.getPredicate())) {
-                log.info("New lvl", stmt.getObject());
+            if (properties.contains(stmt.getPredicate()) && stmt.getObject() instanceof URI) {
+                log.debug("New lvl", stmt.getObject());
                 queryDbpedia(dbpediaConnection, (URI) stmt.getObject(), level - 1);
             }
         }
-        
+
     }
 
     private void registerStatement(Statement stmt) {
@@ -135,18 +140,14 @@ public class DBPediaExpansion implements EntityExpansion {
                 String codeE = getMD5(v1.id().toString() + v2.id().toString() + p);
                 if (!g.E().has("id", codeE).hasNext()) {
                     v1.addEdge(p, v2, "id", codeE, "weight", m.get(stmt.getPredicate()).weight);
-//                    g.addE(p).from(v1).to(v2)
-//                            .property(T.id, codeE)
-//                            .property("weight", m.get(stmt.getPredicate()).weight);
                 }
             } else if (NodeType.Edge == m.get(stmt.getPredicate()).type) {
                 if (g.V().has("id", s).hasNext()) {
-                    Vertex v = g.V(s).next();
+                    Vertex v = g.V().has("id", s).next();
                     v.property(p, o);
                 } else {
                     Vertex v = GraphOperations.insertIdV(g, s, "node");
                     v.property(p, o);
-//                    g.addV("node").property(T.id, s).property(p, o);
                 }
             }
         }
