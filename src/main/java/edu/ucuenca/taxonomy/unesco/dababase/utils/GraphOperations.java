@@ -36,7 +36,7 @@ public class GraphOperations {
      */
     public static Vertex insertIdV(GraphTraversalSource g, String id, String type) {
         if (g.V().has("id", id).hasNext()) {
-            return g.V(id).next();
+            return g.V().has("id",id).next();
         }
         return g.getGraph().get().addVertex("id", id, "label", type);
     }

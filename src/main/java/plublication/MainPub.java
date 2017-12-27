@@ -39,6 +39,7 @@ public class MainPub {
         try {
             Graph programming = IOGraph.read("coco3.graphml");
             p.entitiesEnrichment("http://dbpedia.org/resource/Computer_science");
+
         } catch (RepositoryException ex) {
             Logger.getLogger(MainPub.class.getName()).log(Level.SEVERE, null, ex);
         }
