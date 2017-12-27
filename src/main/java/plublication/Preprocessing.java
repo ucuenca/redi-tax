@@ -10,6 +10,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.jayway.jsonpath.JsonPath;
+import edu.ucuenca.taxonomy.entitymanagement.StatementCounter;
 import edu.ucuenca.taxonomy.unesco.tinkerpop.GraphOperations;
 import edu.ucuenca.taxonomy.unesco.tinkerpop.IOGraph;
 import java.io.BufferedReader;
@@ -19,7 +20,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
@@ -45,10 +48,11 @@ import org.openrdf.query.GraphQueryResult;
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.QueryLanguage;
-import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sparql.SPARQLRepository;
+import org.openrdf.rio.ParserConfig;
+import org.openrdf.rio.RDFHandler;
 
 //import org.apache.log4j.Logger;
 //import org.apache.log4j.Priority;
@@ -248,16 +252,30 @@ public class Preprocessing {
 
         String query2 = "Describe    <" + URI + "> ";
 
-        Repository repository = new SPARQLRepository(DEFAULT_CONTEXT);
+//        Repository repository = new NtripleSPARQLRepository(DEFAULT_CONTEXT);
+        SPARQLRepository repository = new SPARQLRepository(DEFAULT_CONTEXT);
+        Map<String, String> additionalHttpHeaders = new HashMap<>();
+//        additionalHttpHeaders.put("Accept", "application/rdf+xml");
+//        additionalHttpHeaders.put("Accept", "application/n-triples");
+        additionalHttpHeaders.put("Accept", "application/ld+json");
+        repository.setAdditionalHttpHeaders(additionalHttpHeaders);
         try {
             //  repository = new SPARQLRepository(DEFAULT_CONTEXT);
 
             repository.initialize();
             RepositoryConnection connection = repository.getConnection();
-
+            ParserConfig config = new ParserConfig();
+//            config = config.useDefaults();
+//            config.addNonFatalError(BasicParserSettings.NORMALIZE_LANGUAGE_TAGS);
+//            config.addNonFatalError(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES);
+//
+//            connection.setParserConfig(config);
             //  String query = "select distinct ?Concept where {[] a ?Concept} LIMIT 100";
             GraphQuery q = connection.prepareGraphQuery(QueryLanguage.SPARQL, query2, DEFAULT_CONTEXT);
+            RDFHandler rdhl = new StatementCounter();
             GraphQueryResult result = q.evaluate();
+//            q.evaluate(rdhl);
+//            Iterations.asList(result);
 
             while (result.hasNext()) {
                 Statement val = result.next();
@@ -273,7 +291,6 @@ public class Preprocessing {
                 }
 
             }
-
         } catch (RepositoryException | MalformedQueryException | QueryEvaluationException ex) {
             Logger.getLogger(Preprocessing.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
