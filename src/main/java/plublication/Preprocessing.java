@@ -49,6 +49,7 @@ import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sparql.SPARQLRepository;
+import org.openrdf.rio.RDFFormat;
 
 //import org.apache.log4j.Logger;
 //import org.apache.log4j.Priority;
@@ -61,7 +62,7 @@ public class Preprocessing {
     GraphOperations gp = new GraphOperations();
 
     private final ValueFactory vf = ValueFactoryImpl.getInstance();
-    private final static String DEFAULT_CONTEXT = "https://dbpedia.org/sparql";
+    private final static String DEFAULT_CONTEXT = "http://dbpedia.org/sparql";
     // private Logger log = Logger.getLogger(Writer.class.getName());
     private static Preprocessing instanceService = new Preprocessing();
     private HttpClient httpClient = HttpClients.createDefault();
@@ -249,18 +250,22 @@ public class Preprocessing {
         String query2 = "Describe    <" + URI + "> ";
 
         Repository repository = new SPARQLRepository(DEFAULT_CONTEXT);
+
         try {
             //  repository = new SPARQLRepository(DEFAULT_CONTEXT);
 
             repository.initialize();
+          
             RepositoryConnection connection = repository.getConnection();
 
             //  String query = "select distinct ?Concept where {[] a ?Concept} LIMIT 100";
             GraphQuery q = connection.prepareGraphQuery(QueryLanguage.SPARQL, query2, DEFAULT_CONTEXT);
             GraphQueryResult result = q.evaluate();
 
-            while (result.hasNext()) {
+            while ( result.hasNext()) {
+                System.out.println("Clase:"+result.getClass());
                 Statement val = result.next();
+                System.out.println(val);
                 System.out.println("Actual" + URI);
                 System.out.println(val.getSubject() + " - " + val.getPredicate() + " - " + val.getObject());
                 gp.RDF2Graph(val.getSubject().stringValue(), val.getPredicate().stringValue(), val.getObject().stringValue());
@@ -298,7 +303,9 @@ public class Preprocessing {
         gp.setGraph(graph);
         gp.setG(graph.traversal());
         queryDbpedia(uri, 3);
-        IOGraph.write(gp.getGraph(), "coco2.graphml");
+       // IOGraph.write(gp.getGraph(), "coco2.graphml");
     }
+    
+  
 
 }

@@ -111,16 +111,17 @@ public class DBPediaExpansion implements EntityExpansion {
         GraphQueryResult result = dbpediaConnection.prepareGraphQuery(QueryLanguage.SPARQL, query, DBPEDIA_CONTEXT).evaluate();
         while (result.hasNext()) {
             Statement stmt = result.next();
-            log.debug("Actual lvl: {}, Statement: {}", uri, stmt);
+            log.info("Actual lvl: {}, Statement: {}", uri, stmt);
             registerStatement(stmt);
             if (uri.equals(stmt.getObject())) {
                 continue;
             }
             if (properties.contains(stmt.getPredicate())) {
-                log.debug("New lvl", stmt.getObject());
+                log.info("New lvl", stmt.getObject());
                 queryDbpedia(dbpediaConnection, (URI) stmt.getObject(), level - 1);
             }
         }
+        
     }
 
     private void registerStatement(Statement stmt) {
