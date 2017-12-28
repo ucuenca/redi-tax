@@ -28,7 +28,8 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 public class StardogConnection implements AutoCloseable {
 
     private static StardogConnection stardog;
-    private final static String DATABASE = "http://172.16.244.131:5820/myDB";
+   // private final static String DATABASE = "http://172.16.244.131:5820/myDB";
+    private final static String DATABASE = "http://localhost:5820/myDB";
     private final static String USER = "admin";
     private final static String PASSWD = "admin";
     private final static String BASE_IRI = "http://redi.cedi.edu.ec/resource/";

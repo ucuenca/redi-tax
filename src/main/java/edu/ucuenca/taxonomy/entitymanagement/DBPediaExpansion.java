@@ -86,7 +86,12 @@ public class DBPediaExpansion implements EntityExpansion {
                 } else {
                     v = g.V().has("id", uri).next();
                 }
+                if (!v.property("expand").value().toString().equals("true")) {
                 v.property("expand", true);
+                }
+               /* if (!g.V().has("id", uri).has("expand",true).hasNext()) {
+                    v.property("expand", true);
+                }*/
             }
         } catch (Exception ex) {
             log.error("Error executing query", ex);
@@ -143,8 +148,11 @@ public class DBPediaExpansion implements EntityExpansion {
                 }
             } else if (NodeType.Edge == m.get(stmt.getPredicate()).type) {
                 if (g.V().has("id", s).hasNext()) {
-                    Vertex v = g.V().has("id", s).next();
-                    v.property(p, o);
+                    if (!g.V().has("id", s).has(p, o).hasNext()) {
+                        Vertex v = g.V().has("id", s).next();
+                        v.property(p, o);
+                    }
+
                 } else {
                     Vertex v = GraphOperations.insertIdV(g, s, "node");
                     v.property(p, o);
@@ -166,6 +174,7 @@ public class DBPediaExpansion implements EntityExpansion {
     }
 
     private enum NodeType {
+
         Vertex, Edge
     }
 }
