@@ -1,4 +1,5 @@
 # REDI Taxonomy
+[![Build Status](https://travis-ci.org/ucuenca/redi-tax.svg?branch=master)](https://travis-ci.org/ucuenca/redi-tax)
 
 Classify publications according with the UNESCO nomenclature.
 
