@@ -56,11 +56,11 @@
                 <configuration>
                     <programs>
                         <program>
-                            <mainClass>ec.edu.cedia.redi.console.Unesco</mainClass>
+                            <mainClass>ec.edu.cedia.redi.console.UnescoExec</mainClass>
                             <id>unesco</id>
                         </program>
                         <program>
-                            <mainClass>ec.edu.cedia.redi.console.RecognizeArea</mainClass>
+                            <mainClass>ec.edu.cedia.redi.console.RecognizeAreaExec</mainClass>
                             <id>recognize</id>
                         </program>
                     </programs>
