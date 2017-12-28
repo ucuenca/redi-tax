@@ -47,17 +47,20 @@ public class Unesco {
         final Options options = unescoOptions();
         CommandLine cmd;
         try {
+//            args = new String[]{"-p"};
             cmd = parser.parse(options, args);
             if (cmd.hasOption("populate")) {
                 if (cmd.hasOption("db")) {
                     try (Graph graph = StardogConnection.instance(cmd.getOptionValue("db")).graph()) {
                         UnescoPopulation unesco = new UnescoPopulation(graph.traversal());
-                        unesco.populate();
+                        long total = unesco.populate();
+                        log.info("{} UNESCO instances added.", total);
                     }
                 } else {
                     try (Graph graph = StardogConnection.instance().graph()) {
                         UnescoPopulation unesco = new UnescoPopulation(graph.traversal());
-                        unesco.populate();
+                        long total = unesco.populate();
+                        log.info("{} UNESCO instances added.", total);
                     }
                 }
             } else {
@@ -83,7 +86,8 @@ public class Unesco {
         final Option databaseOption = Option.builder("db")
                 .required(false)
                 .longOpt("database")
-                .hasArg(false)
+                .hasArg()
+                .argName("database")
                 .desc("Specify the connection to the Stardog repository (e.g http://localhost:5820/myDB).")
                 .build();
         final Options options = new Options();

@@ -25,7 +25,6 @@ import ec.edu.cedia.redi.utils.GraphOperations;
 import java.util.Collections;
 import java.util.List;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -51,22 +50,22 @@ public class UnescoPopulation {
         this.dbpedia = new DBPediaExpansion(g);
     }
 
-    public Graph populate() throws Exception {
+    public long populate() throws Exception {
         try (UnescoNomeclatureConnection conn = UnescoNomeclatureConnection.getInstance()) {
             UnescoNomeclature unesco = new UnescoNomeclature(conn);
             return populateNodes(unesco.sixDigitResources(), unesco);
         } catch (Exception ex) {
             log.error("Cannot populate Unesco nomenclature", ex);
-            throw ex;
+            throw new RuntimeException(ex);
         }
     }
 
-    private Graph populateNodes(List<URI> unescoURIs, UnescoNomeclature unesco) {
+    private long populateNodes(List<URI> unescoURIs, UnescoNomeclature unesco) {
         return unescoURIs.stream()
                 .filter(uri -> !unesco.code(uri).contains("99"))
                 .map(uri -> findEntities(uri, unesco))
-                .map(uris -> dbpedia.expand(uris, 1))
-                .findFirst().orElse(null);
+                .map(uris -> dbpedia.expand(uris))
+                .count();
     }
 
     private List<URI> findEntities(URI uri, UnescoNomeclature unesco) {

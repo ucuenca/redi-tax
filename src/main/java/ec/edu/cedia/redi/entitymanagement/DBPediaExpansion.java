@@ -18,7 +18,6 @@ package ec.edu.cedia.redi.entitymanagement;
 
 import ec.edu.cedia.redi.entitymanagement.api.EntityExpansion;
 import ec.edu.cedia.redi.utils.GraphOperations;
-import static tinkerpop.GraphOperations.getMD5;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +35,7 @@ import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sparql.SPARQLRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static tinkerpop.GraphOperations.getMD5;
 
 /**
  *
@@ -79,22 +79,20 @@ public class DBPediaExpansion implements EntityExpansion {
             repository.initialize();
             for (URI uri : uris) {
                 log.info("Expanding {}", uri);
+                if (g.V().has("id", uri.stringValue()).has("expand", true).hasNext()) {
+                    continue;
+                }
                 queryDbpedia(repository.getConnection(), uri, lvl);
                 Vertex v;
-                if (!g.V().has("id", uri).hasNext()) {
+                if (!g.V().has("id", uri.stringValue()).hasNext()) {
                     v = GraphOperations.insertIdV(g, uri.stringValue(), "node");
                 } else {
-                    v = g.V().has("id", uri).next();
+                    v = g.V().has("id", uri.stringValue()).next();
                 }
-                if (!v.property("expand").value().toString().equals("true")) {
                 v.property("expand", true);
-                }
-               /* if (!g.V().has("id", uri).has("expand",true).hasNext()) {
-                    v.property("expand", true);
-                }*/
             }
         } catch (Exception ex) {
-            log.error("Error executing query", ex);
+            throw new RuntimeException(ex);
         } finally {
             try {
                 if (repository != null) {
@@ -121,13 +119,13 @@ public class DBPediaExpansion implements EntityExpansion {
         GraphQueryResult result = dbpediaConnection.prepareGraphQuery(QueryLanguage.SPARQL, query, DBPEDIA_CONTEXT).evaluate();
         while (result.hasNext()) {
             Statement stmt = result.next();
-            log.debug("Actual lvl: {}, Statement: {}", uri, stmt);
+            log.info("Actual lvl: {}, Statement: {}", uri, stmt);
             registerStatement(stmt);
             if (uri.equals(stmt.getObject())) {
                 continue;
             }
             if (properties.contains(stmt.getPredicate()) && stmt.getObject() instanceof URI) {
-                log.debug("New lvl", stmt.getObject());
+                log.info("New lvl {} - {}", level - 1, stmt.getObject());
                 queryDbpedia(dbpediaConnection, (URI) stmt.getObject(), level - 1);
             }
         }
