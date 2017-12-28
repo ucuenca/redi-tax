@@ -16,7 +16,7 @@
  */
 package edu.ucuenca.taxonomy.entityrecognition;
 
-import edu.ucuenca.taxonomy.entitymanagement.SpotlightRecognition;
+import ec.edu.cedia.redi.entitymanagement.SpotlightRecognition;
 import java.util.List;
 import static org.junit.Assert.assertEquals;
 import org.junit.BeforeClass;

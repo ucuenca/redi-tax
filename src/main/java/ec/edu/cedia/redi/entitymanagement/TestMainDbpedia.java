@@ -3,10 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package edu.ucuenca.taxonomy.entitymanagement;
+package ec.edu.cedia.redi.entitymanagement;
 
-import edu.ucuenca.taxonomy.entitymanagement.api.EntityExpansion;
-import edu.ucuenca.taxonomy.unesco.dababase.StardogConnection;
+import ec.edu.cedia.redi.entitymanagement.api.EntityExpansion;
+import ec.edu.cedia.redi.repository.StardogConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +21,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.values
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.openrdf.model.impl.URIImpl;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.has;
 
 /**
  *
@@ -33,7 +34,7 @@ public class TestMainDbpedia {
      */
     public static void main(String[] args) throws Exception {
 
-        try (Graph graph = StardogConnection.intance().graph()) {
+        try (Graph graph = StardogConnection.instance().graph()) {
             //Vertex m = graph.addVertex("id", "identifier1", "label", "nodo");
             GraphTraversalSource gt = graph.traversal();
             //gt.getGraph().get().addVertex("id", "identifier2", "label", "nodo2");

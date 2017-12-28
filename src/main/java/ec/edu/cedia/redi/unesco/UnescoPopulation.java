@@ -14,15 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.ucuenca.taxonomy.unesco;
+package ec.edu.cedia.redi.unesco;
 
-import edu.ucuenca.taxonomy.entitymanagement.DBPediaExpansion;
-import edu.ucuenca.taxonomy.entitymanagement.SpotlightRecognition;
-import edu.ucuenca.taxonomy.entitymanagement.api.EntityExpansion;
-import edu.ucuenca.taxonomy.entitymanagement.api.EntityRecognition;
-import edu.ucuenca.taxonomy.unesco.dababase.StardogConnection;
-import edu.ucuenca.taxonomy.unesco.dababase.utils.GraphOperations;
-import edu.ucuenca.taxonomy.unesco.exceptions.ResourceSizeException;
+import ec.edu.cedia.redi.entitymanagement.DBPediaExpansion;
+import ec.edu.cedia.redi.entitymanagement.SpotlightRecognition;
+import ec.edu.cedia.redi.entitymanagement.api.EntityExpansion;
+import ec.edu.cedia.redi.entitymanagement.api.EntityRecognition;
+import ec.edu.cedia.redi.exceptions.ResourceSizeException;
+import ec.edu.cedia.redi.utils.GraphOperations;
 import java.util.Collections;
 import java.util.List;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -92,12 +91,5 @@ public class UnescoPopulation {
             }
         }
         return entities;
-    }
-
-    public static void main(String[] args) throws Exception {
-        try (Graph graph = StardogConnection.intance().graph()) {
-            UnescoPopulation unesco = new UnescoPopulation(graph.traversal());
-            unesco.populate();
-        }
     }
 }

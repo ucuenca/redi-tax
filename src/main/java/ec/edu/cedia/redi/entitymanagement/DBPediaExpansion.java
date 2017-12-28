@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.ucuenca.taxonomy.entitymanagement;
+package ec.edu.cedia.redi.entitymanagement;
 
-import edu.ucuenca.taxonomy.entitymanagement.api.EntityExpansion;
-import edu.ucuenca.taxonomy.unesco.dababase.utils.GraphOperations;
-import static edu.ucuenca.taxonomy.unesco.tinkerpop.GraphOperations.getMD5;
+import ec.edu.cedia.redi.entitymanagement.api.EntityExpansion;
+import ec.edu.cedia.redi.utils.GraphOperations;
+import static tinkerpop.GraphOperations.getMD5;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

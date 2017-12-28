@@ -14,21 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.ucuenca.taxonomy.entitymanagement.api;
+package ec.edu.cedia.redi.entitymanagement.api;
 
 import java.util.List;
-import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.openrdf.model.URI;
 
 /**
  *
  * @author Xavier Sumba <xavier.sumba93@ucuenca.ec>
  */
-public interface EntityExpansion {
+public interface EntityRecognition {
 
-    public static int DEFAULT_LVL = 3;
+    List<URI> getEntities(String context);
 
-    Graph expand(List<URI> uris, int lvl);
+    List<URI> getEntities(String context, double confidence);
 
-    Graph expand(List<URI> uris);
 }

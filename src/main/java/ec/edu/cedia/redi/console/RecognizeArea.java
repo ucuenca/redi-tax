@@ -14,19 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.ucuenca.taxonomy.entitymanagement.api;
-
-import java.util.List;
-import org.openrdf.model.URI;
+package ec.edu.cedia.redi.console;
 
 /**
  *
  * @author Xavier Sumba <xavier.sumba93@ucuenca.ec>
  */
-public interface EntityRecognition {
+public class RecognizeArea {
 
-    List<URI> getEntities(String context);
-
-    List<URI> getEntities(String context, double confidence);
-
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        // TODO code application logic here
+    }
+    
 }

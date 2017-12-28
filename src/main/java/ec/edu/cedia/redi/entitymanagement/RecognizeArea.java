@@ -14,10 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.ucuenca.taxonomy.entitymanagement;
+package ec.edu.cedia.redi.entitymanagement;
 
-import edu.ucuenca.taxonomy.entitymanagement.api.EntityExpansion;
-import edu.ucuenca.taxonomy.entitymanagement.api.EntityRecognition;
+import ec.edu.cedia.redi.entitymanagement.api.EntityExpansion;
+import ec.edu.cedia.redi.entitymanagement.api.EntityRecognition;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,12 +25,12 @@ import static org.apache.tinkerpop.gremlin.process.traversal.Order.incr;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.bothE;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.constant;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.has;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.values;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.URIImpl;
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.has;
 
 /**
  *
@@ -67,7 +67,4 @@ public class RecognizeArea {
         return new URIImpl(uri.toString());
     }
 
-    private void expandNewURIS(List<String> keywords) {
-
-    }
 }

@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.ucuenca.taxonomy.unesco;
+package ec.edu.cedia.redi.unesco;
 
-import edu.ucuenca.taxonomy.unesco.exceptions.ResourceSizeException;
+import ec.edu.cedia.redi.exceptions.ResourceSizeException;
 import info.aduna.iteration.Iterations;
 import java.util.ArrayList;
 import java.util.List;
