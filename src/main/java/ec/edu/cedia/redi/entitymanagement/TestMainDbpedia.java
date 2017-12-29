@@ -9,17 +9,12 @@ import ec.edu.cedia.redi.entitymanagement.api.EntityExpansion;
 import ec.edu.cedia.redi.repository.StardogConnection;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import static org.apache.tinkerpop.gremlin.process.traversal.Order.incr;
-import org.apache.tinkerpop.gremlin.process.traversal.Pop;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.bothE;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.constant;
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.has;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.values;
 import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.openrdf.model.impl.URIImpl;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.has;
 

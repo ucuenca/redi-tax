@@ -90,6 +90,7 @@ public class DBPediaExpansion implements EntityExpansion {
                     v = g.V().has("id", uri.stringValue()).next();
                 }
                 v.property("expand", true);
+                g.tx().commit();
             }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -119,13 +120,13 @@ public class DBPediaExpansion implements EntityExpansion {
         GraphQueryResult result = dbpediaConnection.prepareGraphQuery(QueryLanguage.SPARQL, query, DBPEDIA_CONTEXT).evaluate();
         while (result.hasNext()) {
             Statement stmt = result.next();
-            log.info("Actual lvl: {}, Statement: {}", uri, stmt);
+            log.debug("Actual lvl: {}, Statement: {}", uri, stmt);
             registerStatement(stmt);
             if (uri.equals(stmt.getObject())) {
                 continue;
             }
             if (properties.contains(stmt.getPredicate()) && stmt.getObject() instanceof URI) {
-                log.info("New lvl {} - {}", level - 1, stmt.getObject());
+                log.debug("New lvl {} - {}", level - 1, stmt.getObject());
                 queryDbpedia(dbpediaConnection, (URI) stmt.getObject(), level - 1);
             }
         }
