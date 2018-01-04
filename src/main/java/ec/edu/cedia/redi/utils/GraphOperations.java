@@ -36,10 +36,12 @@ public class GraphOperations {
      */
     public static Vertex insertIdV(GraphTraversalSource g, String id, String type) {
         if (g.V().has("id", id).hasNext()) {
+           
             Vertex v = g.V().has("id", id).next();
            // v.property("id", id, "label", type);
             return v;
         }
-        return g.getGraph().get().addVertex("id", id, "label", type);
+        return g.getGraph().addVertex("id", id, "label", type);
+    //    return g.getGraph().get().addVertex("id", id, "label", type);
     }
 }
