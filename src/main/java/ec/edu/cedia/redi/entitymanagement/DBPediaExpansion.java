@@ -135,6 +135,7 @@ public class DBPediaExpansion implements EntityExpansion {
 
     private void registerStatement(Statement stmt) {
         if (m.containsKey(stmt.getPredicate())) {
+            log.info("Registering statement: {}", stmt);
             String s = stmt.getSubject().stringValue();
             String p = stmt.getPredicate().stringValue();
             String o = stmt.getObject().stringValue();
@@ -147,11 +148,10 @@ public class DBPediaExpansion implements EntityExpansion {
                 }
             } else if (NodeType.Edge == m.get(stmt.getPredicate()).type) {
                 if (g.V().has("id", s).hasNext()) {
-                    if (!g.V().has("id", s).has(p, o).hasNext()) {
-                        Vertex v = g.V().has("id", s).next();
+                    Vertex v = g.V().has("id", s).next();
+                    if (!g.V(v).has(p, o).hasNext()) {
                         v.property(p, o);
                     }
-
                 } else {
                     Vertex v = GraphOperations.insertIdV(g, s, "node");
                     v.property(p, o);

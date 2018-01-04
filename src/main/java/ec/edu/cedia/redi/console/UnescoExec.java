@@ -47,7 +47,7 @@ public class UnescoExec {
         final Options options = unescoOptions();
         CommandLine cmd;
         try {
-//            args = new String[]{"-p"};
+            args = new String[]{"-p"};
             cmd = parser.parse(options, args);
             if (cmd.hasOption("populate")) {
                 if (cmd.hasOption("db")) {

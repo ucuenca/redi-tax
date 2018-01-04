@@ -50,9 +50,8 @@ public class StardogConnection implements AutoCloseable {
         conf.connectionString(database)
                 .credentials(user, passwd)
                 .baseIRI(baseIRI)
-                .namedGraph(context);
+                .namedGraph(context).labelIRI("http://redi.edu.ec/label");
         graph = StardogGraphFactory.open(conf.build());
-
     }
 
     public static StardogConnection instance() {

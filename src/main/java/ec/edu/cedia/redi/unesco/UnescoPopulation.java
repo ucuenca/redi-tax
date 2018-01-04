@@ -53,6 +53,8 @@ public class UnescoPopulation {
     public long populate() throws Exception {
         try (UnescoNomeclatureConnection conn = UnescoNomeclatureConnection.getInstance()) {
             UnescoNomeclature unesco = new UnescoNomeclature(conn);
+//            List<URI> uris = Collections.singletonList(vf.createIRI("http://skos.um.es/unesco6/120302"));
+//            return populateNodes(uris, unesco);
             return populateNodes(unesco.sixDigitResources(), unesco);
         } catch (Exception ex) {
             log.error("Cannot populate Unesco nomenclature", ex);
