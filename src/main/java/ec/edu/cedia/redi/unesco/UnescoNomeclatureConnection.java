@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.ucuenca.taxonomy.unesco;
+package ec.edu.cedia.redi.unesco;
 
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;

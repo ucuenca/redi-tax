@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.ucuenca.taxonomy.entitymanagement;
+package ec.edu.cedia.redi.entitymanagement;
 
-import edu.ucuenca.taxonomy.entitymanagement.api.EntityExpansion;
-import edu.ucuenca.taxonomy.unesco.dababase.utils.GraphOperations;
-import static edu.ucuenca.taxonomy.unesco.tinkerpop.GraphOperations.getMD5;
+import ec.edu.cedia.redi.entitymanagement.api.EntityExpansion;
+import ec.edu.cedia.redi.utils.GraphOperations;
+import ec.edu.cedia.redi.utils.IOGraph;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +36,7 @@ import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sparql.SPARQLRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static tinkerpop.GraphOperations.getMD5;
 
 /**
  *
@@ -48,6 +49,7 @@ public class DBPediaExpansion implements EntityExpansion {
     private final static String DBPEDIA_CONTEXT = "https://dbpedia.org/sparql";
     private final Logger log = LoggerFactory.getLogger(DBPediaExpansion.class);
     private final GraphTraversalSource g;
+    private int count = 0;
 
     static {
         properties.add(new URIImpl("http://purl.org/dc/terms/subject"));
@@ -79,22 +81,22 @@ public class DBPediaExpansion implements EntityExpansion {
             repository.initialize();
             for (URI uri : uris) {
                 log.info("Expanding {}", uri);
+                if (g.V().has("id", uri.stringValue()).has("expand", true).hasNext()) {
+                   continue;
+                }
                 queryDbpedia(repository.getConnection(), uri, lvl);
                 Vertex v;
-                if (!g.V().has("id", uri).hasNext()) {
+                if (!g.V().has("id", uri.stringValue()).hasNext()) {
                     v = GraphOperations.insertIdV(g, uri.stringValue(), "node");
                 } else {
-                    v = g.V().has("id", uri).next();
+                    v = g.V().has("id", uri.stringValue()).next();
                 }
-                if (!v.property("expand").value().toString().equals("true")) {
                 v.property("expand", true);
-                }
-               /* if (!g.V().has("id", uri).has("expand",true).hasNext()) {
-                    v.property("expand", true);
-                }*/
+             //   g.tx().commit();
+                IOGraph.write(g.getGraph(), "test.graphml");
             }
         } catch (Exception ex) {
-            log.error("Error executing query", ex);
+            throw new RuntimeException(ex);
         } finally {
             try {
                 if (repository != null) {
@@ -104,7 +106,7 @@ public class DBPediaExpansion implements EntityExpansion {
                 log.error("Cannot shutdown repository", ex);
             }
         }
-        return g.getGraph().get();
+        return g.getGraph();
     }
 
     @Override
@@ -116,22 +118,31 @@ public class DBPediaExpansion implements EntityExpansion {
         if (level < 1) {
             return;
         }
-
+           
         String query = String.format("DESCRIBE <%s> ", uri.stringValue());
         GraphQueryResult result = dbpediaConnection.prepareGraphQuery(QueryLanguage.SPARQL, query, DBPEDIA_CONTEXT).evaluate();
         while (result.hasNext()) {
             Statement stmt = result.next();
-            log.debug("Actual lvl: {}, Statement: {}", uri, stmt);
+            log.info("Actual lvl: {}, Statement: {}", uri, stmt);
+            if (uri.stringValue().equals("http://dbpedia.org/resource/Category:Dimensionless_numbers") && stmt.getObject().stringValue().equals("http://dbpedia.org/resource/Category:Dimensional_analysis") ) {
+            System.out.print ("Aqui iba el error");
+            }
             registerStatement(stmt);
             if (uri.equals(stmt.getObject())) {
                 continue;
             }
             if (properties.contains(stmt.getPredicate()) && stmt.getObject() instanceof URI) {
-                log.debug("New lvl", stmt.getObject());
+                log.info("New lvl {} - {}", level - 1, stmt.getObject());
                 queryDbpedia(dbpediaConnection, (URI) stmt.getObject(), level - 1);
             }
         }
 
+    }
+    
+    private void registerStatement () {
+       Vertex v5 =   g.V().has("id", "http://dbpedia.org/resource/Category:Dimensionless_numbers").next();
+       System.out.println ("LOAD"+count++);
+         System.out.println (v5);
     }
 
     private void registerStatement(Statement stmt) {
@@ -139,22 +150,34 @@ public class DBPediaExpansion implements EntityExpansion {
             String s = stmt.getSubject().stringValue();
             String p = stmt.getPredicate().stringValue();
             String o = stmt.getObject().stringValue();
+            System.out.println(stmt);
+            
+            if (s.equals("http://dbpedia.org/resource/Category:Dimensionless_numbers_of_thermodynamics") && o.equals("http://dbpedia.org/resource/Category:Dimensionless_numbers")) { 
+            //    System.out.print ("Hasta aqui"+count);
+            System.out.print ("Error");
+            }
+            
             if (NodeType.Vertex == m.get(stmt.getPredicate()).type) {
-                Vertex v1 = GraphOperations.insertIdV(g, s, "node");
-                Vertex v2 = GraphOperations.insertIdV(g, o, "node");
+               // Vertex v1 = GraphOperations.insertIdV(g, s, "node");
+               // Vertex v2 = GraphOperations.insertIdV(g, o, "node");
+                 Vertex v1 = this.insertIdV(g, s, "node");
+                Vertex v2 = this.insertIdV(g, o, "node");
                 String codeE = getMD5(v1.id().toString() + v2.id().toString() + p);
                 if (!g.E().has("id", codeE).hasNext()) {
-                    v1.addEdge(p, v2, "id", codeE, "weight", m.get(stmt.getPredicate()).weight);
+                    count++;
+                   
+                    v1.addEdge(codeE, v2, "id", codeE, "weight", m.get(stmt.getPredicate()).weight);
                 }
             } else if (NodeType.Edge == m.get(stmt.getPredicate()).type) {
                 if (g.V().has("id", s).hasNext()) {
                     if (!g.V().has("id", s).has(p, o).hasNext()) {
+                        count++;
                         Vertex v = g.V().has("id", s).next();
                         v.property(p, o);
                     }
 
                 } else {
-                    Vertex v = GraphOperations.insertIdV(g, s, "node");
+                    Vertex v = insertIdV(g, s, "node");
                     v.property(p, o);
                 }
             }
@@ -176,5 +199,18 @@ public class DBPediaExpansion implements EntityExpansion {
     private enum NodeType {
 
         Vertex, Edge
+    }
+    
+     public  Vertex insertIdV(GraphTraversalSource g, String id, String type) {
+         count++;
+         System.out.print ("Hasta aqui"+count);
+        if (g.V().has("id", id).hasNext()) {
+            
+            Vertex v = g.V().has("id", id).next();
+           // v.property("id", id, "label", type);
+            return v;
+        }
+        //g.getGraph().get().addVertex("id", id, "label", type);
+        return g.getGraph().addVertex("id", id, "label", type);
     }
 }

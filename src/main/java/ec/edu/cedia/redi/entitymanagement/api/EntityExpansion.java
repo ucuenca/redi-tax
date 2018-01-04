@@ -14,32 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.ucuenca.taxonomy.unesco.dababase.utils;
+package ec.edu.cedia.redi.entitymanagement.api;
 
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
+import java.util.List;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.openrdf.model.URI;
 
 /**
- * Common operations for managing a vertex/edge.
  *
  * @author Xavier Sumba <xavier.sumba93@ucuenca.ec>
  */
-public class GraphOperations {
+public interface EntityExpansion {
 
-    /**
-     * Inserts a vertex with two properties, id and type.
-     *
-     * @param g
-     * @param id   must be a URI
-     * @param type node/unesco
-     * @return
-     */
-    public static Vertex insertIdV(GraphTraversalSource g, String id, String type) {
-        if (g.V().has("id", id).hasNext()) {
-            Vertex v = g.V().has("id", id).next();
-           // v.property("id", id, "label", type);
-            return v;
-        }
-        return g.getGraph().get().addVertex("id", id, "label", type);
-    }
+    public static int DEFAULT_LVL = 3;
+
+    Graph expand(List<URI> uris, int lvl);
+
+    Graph expand(List<URI> uris);
 }

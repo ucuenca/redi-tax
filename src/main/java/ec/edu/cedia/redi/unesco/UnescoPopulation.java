@@ -14,19 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.ucuenca.taxonomy.unesco;
+package ec.edu.cedia.redi.unesco;
 
-import edu.ucuenca.taxonomy.entitymanagement.DBPediaExpansion;
-import edu.ucuenca.taxonomy.entitymanagement.SpotlightRecognition;
-import edu.ucuenca.taxonomy.entitymanagement.api.EntityExpansion;
-import edu.ucuenca.taxonomy.entitymanagement.api.EntityRecognition;
-import edu.ucuenca.taxonomy.unesco.dababase.StardogConnection;
-import edu.ucuenca.taxonomy.unesco.dababase.utils.GraphOperations;
-import edu.ucuenca.taxonomy.unesco.exceptions.ResourceSizeException;
+import ec.edu.cedia.redi.entitymanagement.DBPediaExpansion;
+import ec.edu.cedia.redi.entitymanagement.SpotlightRecognition;
+import ec.edu.cedia.redi.entitymanagement.api.EntityExpansion;
+import ec.edu.cedia.redi.entitymanagement.api.EntityRecognition;
+import ec.edu.cedia.redi.exceptions.ResourceSizeException;
+import ec.edu.cedia.redi.utils.GraphOperations;
 import java.util.Collections;
 import java.util.List;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -52,22 +50,22 @@ public class UnescoPopulation {
         this.dbpedia = new DBPediaExpansion(g);
     }
 
-    public Graph populate() throws Exception {
+    public long populate() throws Exception {
         try (UnescoNomeclatureConnection conn = UnescoNomeclatureConnection.getInstance()) {
             UnescoNomeclature unesco = new UnescoNomeclature(conn);
             return populateNodes(unesco.sixDigitResources(), unesco);
         } catch (Exception ex) {
             log.error("Cannot populate Unesco nomenclature", ex);
-            throw ex;
+            throw new RuntimeException(ex);
         }
     }
 
-    private Graph populateNodes(List<URI> unescoURIs, UnescoNomeclature unesco) {
+    private long populateNodes(List<URI> unescoURIs, UnescoNomeclature unesco) {
         return unescoURIs.stream()
                 .filter(uri -> !unesco.code(uri).contains("99"))
                 .map(uri -> findEntities(uri, unesco))
-                .map(uris -> dbpedia.expand(uris, 1))
-                .findFirst().orElse(null);
+                .map(uris -> dbpedia.expand(uris))
+                .count();
     }
 
     private List<URI> findEntities(URI uri, UnescoNomeclature unesco) {
@@ -92,12 +90,5 @@ public class UnescoPopulation {
             }
         }
         return entities;
-    }
-
-    public static void main(String[] args) throws Exception {
-        try (Graph graph = StardogConnection.intance().graph()) {
-            UnescoPopulation unesco = new UnescoPopulation(graph.traversal());
-            unesco.populate();
-        }
     }
 }

@@ -3,9 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package edu.ucuenca.taxonomy.unesco.tinkerpop;
+package tinkerpop;
 
 //import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import ec.edu.cedia.redi.utils.IOGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*;
 import org.apache.tinkerpop.gremlin.structure.Graph;

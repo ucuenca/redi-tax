@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.ucuenca.taxonomy.entitymanagement;
+package ec.edu.cedia.redi.entitymanagement;
 
-import edu.ucuenca.taxonomy.entitymanagement.api.EntityRecognition;
+import ec.edu.cedia.redi.entitymanagement.api.EntityRecognition;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;

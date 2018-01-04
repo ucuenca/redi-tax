@@ -5,7 +5,7 @@
  */
 package plublication;
 
-import edu.ucuenca.taxonomy.unesco.tinkerpop.IOGraph;
+import ec.edu.cedia.redi.utils.IOGraph;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
