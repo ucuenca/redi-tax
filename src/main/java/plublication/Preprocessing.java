@@ -112,7 +112,7 @@ public class Preprocessing {
     }
     
     
-        public Object CompareText(String text1, String text2) throws UnsupportedEncodingException, IOException {
+        public Object CompareText(String text1, String text2 , String metric) throws UnsupportedEncodingException, IOException {
 
         HttpPost post = new HttpPost("http://api.cortical.io/rest/compare?retina_name=en_associative");
 
@@ -132,12 +132,15 @@ public class Preprocessing {
         System.out.println(jsonArr.toJSONString());
         StringEntity textEntity = new StringEntity( jsonArr.toJSONString()) ;
         post.setEntity(textEntity);
-        post.addHeader("api-key", "1c556a80-8595-11e6-a057-97f4c970893c");
+      //  post.addHeader("api-key", "1c556a80-8595-11e6-a057-97f4c970893c");
         post.addHeader("Content-Type", "application/json");
-       // post.addHeader("Cache-Control", "no-cache");
-       // post.addHeader("Accept", "application/json");
+        post.addHeader("Cache-Control", "no-cache");
+        post.addHeader("Accept", "application/json");
+         post.addHeader("Accept-Encoding", "gzip, deflate");
+        	
 
-        return executeServicePath(post, "$.jaccardDistance");
+
+        return executeServicePath(post, "$."+metric);
     }
 
     public Object executeService(HttpUriRequest request, @Nullable String key, @Nullable String Secondkey) throws IOException {
