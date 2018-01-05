@@ -12,8 +12,6 @@ import ec.edu.cedia.redi.RediRepository;
 import ec.edu.cedia.redi.unesco.UnescoNomeclature;
 import ec.edu.cedia.redi.unesco.UnescoNomeclatureConnection;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,15 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.ParseException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.openrdf.model.URI;
 import plublication.Preprocessing;
 
@@ -97,33 +86,6 @@ public class corticalTest {
             for (Map.Entry<URI, Double> score : r.getValue().entrySet()) {
                 System.out.println("\t\t" + score.getKey() + "\t\t" + score.getValue());
             }
-        }
-    }
-    private static final HttpClient httpclient = HttpClients.createDefault();
-
-    public static void getEntities(String json) {
-        try {
-            URIBuilder builder = new URIBuilder("http://api.cortical.io/rest/compare");
-            builder.setParameter("retina_name", "en_associative");
-            builder.setParameter("api-key", "1c556a80-8595-11e6-a057-97f4c970893c");
-            builder.setParameter("Content-Type", "application/json");
-
-            java.net.URI uri = builder.build();
-
-            HttpPost httpPost = new HttpPost(uri);
-            httpPost.addHeader("Accept", "application/json");
-            StringEntity textEntity = new StringEntity(json);
-            httpPost.setEntity(textEntity);
-            // Request response
-            HttpResponse response = httpclient.execute(httpPost);
-            HttpEntity entity = response.getEntity();
-            if (entity != null) {
-                String result = EntityUtils.toString(entity);
-                System.out.println(result);
-//                ObjectNode root = (ObjectNode) mapper.readTree(result);
-            }
-        } catch (UnsupportedEncodingException ex) {
-        } catch (IOException | ParseException | URISyntaxException ex) {
         }
     }
 

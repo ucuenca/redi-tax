@@ -26,5 +26,7 @@ nbactions.xml
 nb-configuration.xml
 target/
 
+*.csv
+
 # GraphML file format
 *.graphml
