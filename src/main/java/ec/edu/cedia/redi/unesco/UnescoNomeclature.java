@@ -182,6 +182,7 @@ public class UnescoNomeclature {
             }
         } catch (MalformedQueryException ex) {
             log.error("Query malformed.", ex);
+        } catch (RepositoryException ex) {
         }
         return null;
     }
