@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -34,6 +36,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
@@ -106,6 +109,35 @@ public class Preprocessing {
         post.addHeader("Accept", "application/json");
 
         return executeService(post, null, null);
+    }
+    
+    
+        public Object CompareText(String text1, String text2) throws UnsupportedEncodingException, IOException {
+
+        HttpPost post = new HttpPost("http://api.cortical.io/rest/compare?retina_name=en_associative");
+
+        
+       JSONObject json1 = new JSONObject();
+       json1.put("text", text1);
+               
+       JSONObject json2 = new JSONObject();
+       json2.put("text", text2);
+             
+        JSONArray jsonArr = new JSONArray (); 
+        jsonArr.add( json1);
+        jsonArr.add( json2);
+     
+       // StringEntity textEntity = new StringEntity(" { \"elements\" : [{ \"term\": \"Pablo Picasso\"  }, " +
+       // "{ \"text\": \"Gustav Klimt was born in Baumgarten, near Vienna in Austria-Hungary, the second of seven children\"}]}");
+        System.out.println(jsonArr.toJSONString());
+        StringEntity textEntity = new StringEntity( jsonArr.toJSONString()) ;
+        post.setEntity(textEntity);
+        post.addHeader("api-key", "1c556a80-8595-11e6-a057-97f4c970893c");
+        post.addHeader("Content-Type", "application/json");
+       // post.addHeader("Cache-Control", "no-cache");
+       // post.addHeader("Accept", "application/json");
+
+        return executeServicePath(post, "$.jaccardDistance");
     }
 
     public Object executeService(HttpUriRequest request, @Nullable String key, @Nullable String Secondkey) throws IOException {
