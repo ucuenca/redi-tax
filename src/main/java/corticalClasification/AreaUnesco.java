@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package corticalClasification;
 
 import org.openrdf.model.URI;
@@ -13,6 +12,7 @@ import org.openrdf.model.URI;
  * @author joe
  */
 public class AreaUnesco {
+
     private String label;
     private URI uri;
     private Double Score;
@@ -46,5 +46,10 @@ public class AreaUnesco {
     public void setScore(Double Score) {
         this.Score = Score;
     }
-    
+
+    @Override
+    public String toString() {
+        return "[uri: " + uri + ", label: " + label + "]";
+    }
+
 }

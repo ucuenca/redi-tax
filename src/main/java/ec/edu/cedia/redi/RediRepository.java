@@ -27,16 +27,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Read-only repository for REDI.
  *
  * @author Xavier Sumba <xavier.sumba93@ucuenca.ec>
  */
 public class RediRepository implements AutoCloseable {
 
-    private final static String ENDPOINT_REDI = "http://rediclon.cedia.edu.ec/sparql";
+    public final static String ENDPOINT_REDI = "http://rediclon.cedia.edu.ec/sparql";
+    private final static String READ_ONLY_REDI = ENDPOINT_REDI + "/select";
     public final static String DEFAULT_CONTEXT = "http://redi.cedia.edu.ec/context/redi";
-    private final SPARQLRepository repository = new SPARQLRepository(ENDPOINT_REDI);
     private static final Logger log = LoggerFactory.getLogger(UnescoNomeclatureConnection.class);
     private static final Map<String, String> headers = new HashMap<>();
+//    private Repository repository;
+    private SPARQLRepository repository;
 
     static {
         headers.put("Accept", "application/ld+json");
@@ -44,11 +47,9 @@ public class RediRepository implements AutoCloseable {
     private static RediRepository instance;
 
     private RediRepository() throws RepositoryException {
-        if (!repository.isInitialized()) {
-            repository.initialize();
-            repository.setAdditionalHttpHeaders(headers);
-            log.debug("Initializing a repository to unesco SPARQL endpoint.");
-        }
+        repository = new SPARQLRepository(READ_ONLY_REDI);
+        repository.initialize();
+        log.debug("Initializing a repository REDI endpoint.");
     }
 
     public static synchronized RediRepository getInstance() throws RepositoryException {

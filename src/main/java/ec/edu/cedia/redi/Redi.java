@@ -16,19 +16,30 @@
  */
 package ec.edu.cedia.redi;
 
+import corticalClasification.AreaUnesco;
+import static ec.edu.cedia.redi.RediRepository.ENDPOINT_REDI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import org.openrdf.model.Model;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
+import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.model.impl.ValueFactoryImpl;
+import org.openrdf.model.vocabulary.FOAF;
+import org.openrdf.model.vocabulary.RDFS;
 import org.openrdf.query.GraphQuery;
 import org.openrdf.query.GraphQueryResult;
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.QueryLanguage;
+import org.openrdf.query.TupleQuery;
+import org.openrdf.query.TupleQueryResult;
+import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
+import org.openrdf.repository.sparql.SPARQLRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,15 +48,16 @@ import org.slf4j.LoggerFactory;
  * @author Xavier Sumba <xavier.sumba93@ucuenca.ec>
  */
 public class Redi {
-
+    
     private final RediRepository conn;
     private final ValueFactory vf = ValueFactoryImpl.getInstance();
+    private static final ValueFactory vf1 = ValueFactoryImpl.getInstance();
     private static final Logger log = LoggerFactory.getLogger(Redi.class);
-
+    
     public Redi(RediRepository conn) {
         this.conn = conn;
     }
-
+    
     public List<Author> getAuthors() throws RepositoryException {
         RepositoryConnection connection = conn.getConnection();
         List<Author> authors = new ArrayList<>();
@@ -60,7 +72,7 @@ public class Redi {
                     + "  ?p dct:subject [rdfs:label ?kw]"
                     + "}} GROUP BY ?a}";
             GraphQuery q = connection.prepareGraphQuery(QueryLanguage.SPARQL, query);
-            q.setBinding("graph", vf.createIRI(RediRepository.DEFAULT_CONTEXT));
+            q.setBinding("graph", vf.createURI(RediRepository.DEFAULT_CONTEXT));
             GraphQueryResult result = q.evaluate();
             while (result.hasNext()) {
                 Statement stmt = result.next();
@@ -74,5 +86,78 @@ public class Redi {
             connection.close();
         }
         return authors;
+    }
+    
+    public void store(URI author, List<AreaUnesco> areas) throws RepositoryException {
+        // Use
+        Repository repository = new SPARQLRepository(ENDPOINT_REDI + "/update");
+        repository.initialize();
+        
+        RepositoryConnection connection = repository.getConnection();
+        Model dataset = new LinkedHashModel();
+        List<URI> publications = getPublications(author);
+        for (AreaUnesco area : areas) {
+            for (URI publication : publications) {
+                Statement regPub = vf.createStatement(area.getUri(), FOAF.PUBLICATIONS, publication);
+                Statement regAuthor = vf.createStatement(publication, vf.createURI("http://ucuenca.edu.ec/ontology#hasPerson"), author);
+                dataset.add(regPub);
+                dataset.add(regAuthor);
+            }
+            Statement regAreas = vf.createStatement(area.getUri(), RDFS.LABEL, vf.createLiteral(area.getLabel(), "en"));
+            dataset.add(regAreas);
+        }
+        try {
+            connection.begin();
+            connection.add(dataset, vf.createURI("http://redi.cedia.edu.ec/context/clusters"));
+        } catch (RepositoryException ex) {
+            log.error("", ex);
+        } finally {
+            connection.commit();
+            connection.close();
+            log.info("Stored author {} with areas {}", author, areas);
+        }
+        repository.shutDown();
+    }
+    
+    private List<URI> getPublications(URI author) throws RepositoryException {
+        RepositoryConnection connection = conn.getConnection();
+        List<URI> publications = new ArrayList<>();
+        try {
+            String query = "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n"
+                    + "PREFIX dct: <http://purl.org/dc/terms/> "
+                    //                    + "CONSTRUCT {?author foaf:publications ?p} WHERE {"
+                    + "SELECT ?p "
+                    + "WHERE { GRAPH ?graph {"
+                    + "  ?author a foaf:Person;"
+                    + "    foaf:publications ?p."
+                    + "}}";//}";
+            TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
+            q.setBinding("graph", vf.createURI(RediRepository.DEFAULT_CONTEXT));
+            q.setBinding("author", author);
+            TupleQueryResult result = q.evaluate();
+            while (result.hasNext()) {
+                URI publication = vf.createURI(result.next().getValue("p").stringValue());
+                publications.add(publication);
+            }
+        } catch (MalformedQueryException ex) {
+            log.error("Cannot execute query.", ex);
+        } catch (QueryEvaluationException ex) {
+            log.error("Cannot evaluate query.", ex);
+        } finally {
+            connection.close();
+        }
+        return publications;
+    }
+    
+    public static void main(String[] args) {
+        try (RediRepository r = RediRepository.getInstance()) {
+            Redi redi = new Redi(r);
+            List<AreaUnesco> areas = Arrays.asList(new AreaUnesco("Computer Science", vf1.createURI("http://skos.um.es/unesco6/1203"), 1.1));
+            URI author = vf1.createURI("http://redi.cedia.edu.ec/resource/authors/UCUENCA/file/_SAQUICELA_GALARZA_____VICTOR_HUGO_");
+            redi.store(author, areas);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        }
+        
     }
 }

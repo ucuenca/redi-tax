@@ -18,6 +18,7 @@ package ec.edu.cedia.redi.utils;
 
 import com.google.common.base.Preconditions;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +26,12 @@ import java.io.OutputStream;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+import org.openrdf.model.Model;
+import org.openrdf.model.Statement;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.RDFWriter;
+import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,5 +79,26 @@ public class IOGraph {
             return null;
         }
         return newGraph;
+    }
+
+    /**
+     * Stores a dataset in format {@link RDFFormat.RDFXML} in the file
+     * specified.
+     *
+     * @param model
+     * @param file
+     * @throws FileNotFoundException
+     */
+    public static void writeRDF(Model model, String file) throws FileNotFoundException {
+        FileOutputStream out = new FileOutputStream(file);
+        RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, out);
+        try {
+            writer.startRDF();
+            for (Statement st : model) {
+                writer.handleStatement(st);
+            }
+            writer.endRDF();
+        } catch (RDFHandlerException e) {
+        }
     }
 }

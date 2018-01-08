@@ -136,7 +136,7 @@ public class UnescoNomeclature {
      * @return
      * @throws RepositoryException
      */
-    public List<URI> narrow(URI field) throws RepositoryException {
+    public List<URI> narrow(URI field) {
         List<URI> resources = new ArrayList<>(24);
 
         try {
@@ -150,6 +150,8 @@ public class UnescoNomeclature {
             resources = processQueryURIFields(q);
         } catch (MalformedQueryException ex) {
             log.error("Query malformed.", ex);
+        } catch (RepositoryException ex) {
+            log.error("", ex);
         }
         return resources;
     }
