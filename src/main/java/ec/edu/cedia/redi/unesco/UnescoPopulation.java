@@ -22,6 +22,10 @@ import ec.edu.cedia.redi.entitymanagement.api.EntityExpansion;
 import ec.edu.cedia.redi.entitymanagement.api.EntityRecognition;
 import ec.edu.cedia.redi.exceptions.ResourceSizeException;
 import ec.edu.cedia.redi.utils.GraphOperations;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.List;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -73,6 +77,9 @@ public class UnescoPopulation {
     private List<URI> findEntities(URI uri, UnescoNomeclature unesco) {
         String label = unesco.label(uri, "en").getLabel();
         List<URI> entities = spotlight.getEntities(label);
+
+        saveLinks(uri, entities);
+
         Vertex unescoVertex = GraphOperations.insertIdV(g, uri.stringValue(), "unesco");
 
         entities.stream().map(entity -> {
@@ -93,4 +100,22 @@ public class UnescoPopulation {
         }
         return entities;
     }
+
+    private void saveLinks(URI unesco, List<URI> dbpedia) {
+        StringBuilder unescoStr = new StringBuilder();
+        StringBuilder dbpediaStr = new StringBuilder();
+        for (URI entity : dbpedia) {
+            unescoStr.append(unesco.toString()).append(",")
+                    .append(entity.toString())
+                    .append('\n');
+            dbpediaStr.append(entity.stringValue()).append('\n');
+        }
+        try {
+            Files.write(Paths.get("unesco.csv"), unescoStr.toString().getBytes(), StandardOpenOption.APPEND);
+            Files.write(Paths.get("dbpedia.csv"), dbpediaStr.toString().getBytes(), StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            log.error("cannot save uris in file", e);
+        }
+    }
+
 }

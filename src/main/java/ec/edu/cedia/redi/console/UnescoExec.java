@@ -58,6 +58,7 @@ public class UnescoExec {
                     }
                 } else {
                     try (Graph graph = StardogConnection.instance().graph()) {
+//                    UnescoPopulation unesco = new UnescoPopulation(TinkerGraph.open().traversal());
                         UnescoPopulation unesco = new UnescoPopulation(graph.traversal());
                         long total = unesco.populate();
                         log.info("{} UNESCO instances added.", total);
