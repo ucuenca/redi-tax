@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RediRepository implements AutoCloseable {
 
-    private final static String ENDPOINT_REDI = "http://redi.cedia.edu.ec/sparql";
+    private final static String ENDPOINT_REDI = "http://rediclon.cedia.edu.ec/sparql";
     public final static String DEFAULT_CONTEXT = "http://redi.cedia.edu.ec/context/redi";
     private final SPARQLRepository repository = new SPARQLRepository(ENDPOINT_REDI);
     private static final Logger log = LoggerFactory.getLogger(UnescoNomeclatureConnection.class);
