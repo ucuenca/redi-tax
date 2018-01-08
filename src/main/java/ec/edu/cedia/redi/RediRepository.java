@@ -27,18 +27,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Read-only repository for REDI.
+ *
  *
  * @author Xavier Sumba <xavier.sumba93@ucuenca.ec>
  */
 public class RediRepository implements AutoCloseable {
 
     public final static String ENDPOINT_REDI = "http://rediclon.cedia.edu.ec/sparql";
-    private final static String READ_ONLY_REDI = ENDPOINT_REDI + "/select";
+    private final static String QUERY_ENDPOINT_REDI = ENDPOINT_REDI + "/select";
+    private final static String UPDATE_ENDPOINT_REDI = ENDPOINT_REDI + "/update";
     public final static String DEFAULT_CONTEXT = "http://redi.cedia.edu.ec/context/redi";
     private static final Logger log = LoggerFactory.getLogger(UnescoNomeclatureConnection.class);
     private static final Map<String, String> headers = new HashMap<>();
-//    private Repository repository;
     private SPARQLRepository repository;
 
     static {
@@ -47,7 +47,7 @@ public class RediRepository implements AutoCloseable {
     private static RediRepository instance;
 
     private RediRepository() throws RepositoryException {
-        repository = new SPARQLRepository(READ_ONLY_REDI);
+        repository = new SPARQLRepository(QUERY_ENDPOINT_REDI, UPDATE_ENDPOINT_REDI);
         repository.initialize();
         log.debug("Initializing a repository REDI endpoint.");
     }

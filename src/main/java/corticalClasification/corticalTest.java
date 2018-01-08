@@ -6,32 +6,22 @@
 package corticalClasification;
 
 import com.google.common.base.Joiner;
-import com.squareup.javapoet.ClassName;
 import ec.edu.cedia.redi.Author;
-
-import corticalClasification.File;
-
 import ec.edu.cedia.redi.Redi;
 import ec.edu.cedia.redi.RediRepository;
 import ec.edu.cedia.redi.unesco.UnescoNomeclature;
 import ec.edu.cedia.redi.unesco.UnescoNomeclatureConnection;
-import java.math.BigDecimal;
-import java.util.List;
-import org.apache.commons.lang3.StringUtils;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.net.URISyntaxException;
-import java.io.IOException;
-import static java.lang.Double.compare;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
@@ -41,9 +31,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-
 import org.openrdf.model.URI;
-import org.openrdf.model.impl.URIImpl;
 import plublication.Preprocessing;
 
 /**
@@ -52,34 +40,32 @@ import plublication.Preprocessing;
  */
 public class corticalTest {
 
-    private static List<AreaUnesco>  filterAreas( List<AreaUnesco> l , int n , double porcentage) {
-         
-         Collections.sort(l , new AreaUnesco().reversed() );
-         
-        if (n >= l.size()){
-             return l;
+    private static List<AreaUnesco> filterAreas(List<AreaUnesco> l, int n, double porcentage) {
+
+        Collections.sort(l, new AreaUnesco().reversed());
+
+        if (n >= l.size()) {
+            return l;
+        }
+
+        Double min = 0.0;
+        for (int i = 0; i < l.size(); i++) {
+
+            if (i == 0) {
+                min = l.get(i).getScore() - l.get(i).getScore() * porcentage;
+            } else if (l.get(i).getScore() < min || n < i + 1) {
+                return l.subList(0, i);
             }
-               
-                Double min = 0.0;
-           for (int i=0 ; i< l.size() ;i++) {
-                           
-                if (i==0) {
-                    min = l.get(i).getScore() - l.get(i).getScore()*porcentage;
-                }else {
-                    if (l.get(i).getScore() < min || n < i+1 ){
-                      return l.subList(0, i);
-                    }
-                }
-                         
-           }
-           
+
+        }
+
         return l;
     }
 
     private static void registerAuthorAreas(URI uri, List<AreaUnesco> filterAreas) {
-        System.out.println ("Resultado Final: "+uri);
-        for (AreaUnesco a  :filterAreas) {
-        System.out.print ("|"+a.getLabel()+"-"+a.getScore());
+        System.out.println("Resultado Final: " + uri);
+        for (AreaUnesco a : filterAreas) {
+            System.out.print("|" + a.getLabel() + "-" + a.getScore());
         }
         ///throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
@@ -92,7 +78,6 @@ public class corticalTest {
 
     public static void main(String[] args) throws Exception {
 
-
         UnescoNomeclatureConnection conn = UnescoNomeclatureConnection.getInstance();
         UnescoNomeclature unesco = new UnescoNomeclature(conn);
         List<URI> listUris = unesco.twoDigitResources();
@@ -103,102 +88,98 @@ public class corticalTest {
         Redi r = new Redi(rp);
         Author actual = null;
         List<Author> authors = r.getAuthors();
-        
-        Map<String,  String[]> myHashMap = new HashMap<> ();
-        Map<String,  List<AreaUnesco>> authorAreas = new HashMap<> ();
-       /* String[] e = {"val1.1", "val1.2"};
+
+        Map<String, String[]> myHashMap = new HashMap<>();
+        Map<String, List<AreaUnesco>> authorAreas = new HashMap<>();
+        /* String[] e = {"val1.1", "val1.2"};
  
         myHashMap.put("valor1", neAuthor actualw String[]{"val1","val2"} );
         myHashMap.put("valor3", new String[]{"val1.1","val2.1"});*/
-        
-        File f = new File ();
-     
-   
-        
-        
+
+        File f = new File();
+
         for (Author a : authors) {
-         System.out.println(a.getURI());
+            System.out.println(a.getURI());
         }
-     
-        
+
         for (Author a : authors) {
-          /*  if (a.getURI().toString().contains("saquicela")) {
+            /*  if (a.getURI().toString().contains("saquicela")) {
                 actual = a;
             }*/
-         actual = a;
-        List<AreaUnesco> areasList = new ArrayList ();
-        // continue;
+            actual = a;
+            List<AreaUnesco> areasList = new ArrayList();
+            // continue;
 
-        // System.out.print (p.CompareText("Computer applications , Archive automation, Artificial intelligence, Expert systems,  Pattern recognition, Robotics",
-        //        "TECHNOLOGIES OF INFORMATION AND COMMUNICATION, Big Data, ontologies, NATURAL LANGUAGE PROCESSING, WEB SERVICE, Data Integration"));
-        // String userKeywords = "TECHNOLOGIES OF INFORMATION AND COMMUNICATION, Big Data, ontologies, NATURAL LANGUAGE PROCESSING, WEB SERVICE, Data Integration";
-        System.out.println("AUTOR: " + actual.getURI());
-        String userKeywords = actual.getKeywords();
+            // System.out.print (p.CompareText("Computer applications , Archive automation, Artificial intelligence, Expert systems,  Pattern recognition, Robotics",
+            //        "TECHNOLOGIES OF INFORMATION AND COMMUNICATION, Big Data, ontologies, NATURAL LANGUAGE PROCESSING, WEB SERVICE, Data Integration"));
+            // String userKeywords = "TECHNOLOGIES OF INFORMATION AND COMMUNICATION, Big Data, ontologies, NATURAL LANGUAGE PROCESSING, WEB SERVICE, Data Integration";
+            System.out.println("AUTOR: " + actual.getURI());
+            String userKeywords = actual.getKeywords();
 
-        String bestCategory = "";
-        URI bestCategoryURI = null;
-        Double bestScore = 0.0;
-        for (URI l : listUris) {
-            String arrayLabels = "";
-            System.out.println("*********");
-            String label2 = unesco.label(l, "en").getLabel();
-            System.out.println(label2);
-            List<URI> listN = unesco.narrow(l);
-            for (URI nl : listN) {
-                String label4 = unesco.label(nl, "en").getLabel();
-                System.out.println(label4);
-                // arrayLabels = arrayLabels + ", " + label4;
-                String arrayLabels4 = label4;
-                if (!label4.contains("Other")) {
-                    //  if (listN.size() < 30) {
-                    List<URI> listNl = unesco.narrow(nl);
-                    int count = 0;
-                    for (URI nnl : listNl) {
-                        String label6 = unesco.label(nnl, "en").getLabel();
-                        if (!label6.contains("Other")) {
-                         //   System.out.println(label6);
-                            // arrayLabels = arrayLabels + ", " + label6.replace(".", "");
-                            arrayLabels4 = arrayLabels4 + ", " + StringUtils.stripAccents(label6);
-                            count++;
+            String bestCategory = "";
+            URI bestCategoryURI = null;
+            Double bestScore = 0.0;
+            for (URI l : listUris) {
+                String arrayLabels = "";
+                System.out.println("*********");
+                String label2 = unesco.label(l, "en").getLabel();
+                System.out.println(label2);
+                List<URI> listN = unesco.narrow(l);
+                for (URI nl : listN) {
+                    String label4 = unesco.label(nl, "en").getLabel();
+                    System.out.println(label4);
+                    // arrayLabels = arrayLabels + ", " + label4;
+                    String arrayLabels4 = label4;
+                    if (!label4.contains("Other")) {
+                        //  if (listN.size() < 30) {
+                        List<URI> listNl = unesco.narrow(nl);
+                        int count = 0;
+                        for (URI nnl : listNl) {
+                            String label6 = unesco.label(nnl, "en").getLabel();
+                            if (!label6.contains("Other")) {
+                                //   System.out.println(label6);
+                                // arrayLabels = arrayLabels + ", " + label6.replace(".", "");
+                                arrayLabels4 = arrayLabels4 + ", " + StringUtils.stripAccents(label6);
+                                count++;
 
-                            //     }
+                                //     }
+                            }
                         }
-                    }
 
-                    Double val;
-                    Object number = p.CompareText(arrayLabels4, StringUtils.stripAccents(userKeywords), "weightedScoring");
-                    if (number instanceof Double) {
-                        val = (Double) number;
-                    } else {
-                        val = ((BigDecimal) number).doubleValue();
-                    }
-                    
-                    AreaUnesco area = new AreaUnesco (label4, nl , val  );
-                     areasList.add(area);
+                        Double val;
+                        Object number = p.CompareText(arrayLabels4, StringUtils.stripAccents(userKeywords), "weightedScoring");
+                        if (number instanceof Double) {
+                            val = (Double) number;
+                        } else {
+                            val = ((BigDecimal) number).doubleValue();
+                        }
 
-                    if (bestScore.doubleValue() < val.doubleValue()) {
-                        bestScore = val;
-                        bestCategory = label4;
-                        bestCategoryURI = nl;
-                    }
-                    System.out.println(actual.getURI()+" Score : " + label4 + "-" + val);
+                        AreaUnesco area = new AreaUnesco(label4, nl, val);
+                        areasList.add(area);
 
+                        if (bestScore.doubleValue() < val.doubleValue()) {
+                            bestScore = val;
+                            bestCategory = label4;
+                            bestCategoryURI = nl;
+                        }
+                        System.out.println(actual.getURI() + " Score : " + label4 + "-" + val);
+
+                    }
                 }
+                //   Double val = (Double) p.CompareText(arrayLabels, userKeywords, "weightedScoring");
+
             }
-            //   Double val = (Double) p.CompareText(arrayLabels, userKeywords, "weightedScoring");
+
+            //System.out.println("La mejor categoria para "+actual.getURI().toString()+" es :" + bestCategory + bestScore);
+            //authorAreas.put (actual.getURI().toString() , areasList);
+            // myHashMap.put (actual.getURI().toString() ,new String [] {bestCategory,bestCategoryURI.toString()});
+            //   f.writeMapCSV(myHashMap);  
+            r.store(actual.getURI(), filterAreas(areasList, 2, 0.1));
+//         registerAuthorAreas (  actual.getURI() , filterAreas ( areasList , 2 , 0.1)); 
 
         }
-           
-        //System.out.println("La mejor categoria para "+actual.getURI().toString()+" es :" + bestCategory + bestScore);
-       //authorAreas.put (actual.getURI().toString() , areasList);
-      // myHashMap.put (actual.getURI().toString() ,new String [] {bestCategory,bestCategoryURI.toString()});
-      //   f.writeMapCSV(myHashMap);  
-         registerAuthorAreas (  actual.getURI() , filterAreas ( areasList , 2 , 0.1)); 
-        
-    }
         //f.writeMapCSV(myHashMap);
-      
-        
+
         conn.close();
     }
 
@@ -243,7 +224,7 @@ public class corticalTest {
 //        String txt2 = "Science space (2104 2102 3324);Soil Science (Soil Science) ;Oceanography;Meteorology ;Hydrology ;Geophysics;Geology;Geography ;Geodesy;Geochemistry;Climatology ;Atmospheric sciences ;Space physiology ;Space medicine;Exobiology;Soil physics;Soil morphology and genesis;Soil mineralogy;Soil microbiology;Soil mechanics (agriculture);Soil engineering;Soil xonservation;Soil classification;Soil chemistry;soil cartography;Soil biology;Soil biochemistry;Marine aquaculture (oceanography);Renewable resources (oceanography);Marine Geology (oceanography);Underwater sounds;Shore and near-shore processes;Sea ice ;Sea-air interactions ;Physical oceanography ;Ocean-bottom processes ;Marine zoology ;Marine botany ;Descriptive oceanography;Chemical oceanography;Biological oceanography;Weather modification;Weather analysis;Tropical meteorology;Synoptic meteorology;Satellite meteorology ;Rocket meteorology;Radio meteorology;Radar meteorology;Polar meteorology;Operational forecasting (weather);Observation briefing (weather);Numerical weather prediction;Micrometeorology;Mesometeorología;Marine meteorology ;Industrial meteorology;Hydrometeorology ;Extended weather forecasting;Air pollution ;Agricultural mMeteorology;Transpiration;Surface waters;Soil moisture;Snow;Quality of water ;Precipitation;Permafrost;Limnology;Ice ;Hydrography;Hydrobiology;Groundwater;Glaciology ;Evaporation;Erosion (water);Tectonics;Solid-earth and geophysics;Seismology and seismic exploration;Paleomagnetism;Heat flow (earth);Gravity (earth) and gravity exploration ;Geomagnetism and magnetic explotarion;Well log analysis;Volcanology;Structural geology;Stratigraphy ;Sedimentology;Rock mechanisms;Remote sensing (geology);Photogeology;Petrology, sedimentary;Petrology, igneous and metamorphic;Petroleum geology ;Mineralogy;Mineral deposits;Glacial geology ;Geothermal processes and energy ;Geomorphology;Geological surveys;Geohydrology ;Environmental geology;Engineering geology;Coal geologi ;Areal geology;Topographic geography;Physical geography;Medical geography;Location theory;Land utilization ;Geography of natural resources;Geographical cartography;Biogeography ;Theoretical geodesy;Satellite geodesy ;Physical geodesy;Geodetic surveying;Geodesic photogrammetry;Geodesic navigation;Geodesic cartography;Geodesic astronomy ;Trace elements distribution;Stable isotopes;Organic geochemistry;Low temperatures geochemistry;High temperature geochemistry;Geochronology and radio isotope;Exploration geochemistry;Experimental petrology;Cosmochemistry ;Regional climatology;Physical climatology;Paleoclimatology;Microclimatology;Bioclimatology;Applied climatology;Analytical climatology;Solar wind;Radioactive transfer;Precipitation physics;Numerical modelling;Magnetospheric waves;Magnetospheric particles;Ionosphere;Geomagnetic pulsations;Dissemination (atmospheric);Cosmic rays ;Cloud physics;Aurora;Atmospheric turbulence";
 //        getEntities(txt);
 //        p.CompareText(StringUtils.stripAccents(txt1), StringUtils.stripAccents(txt2));
- /*       corticalTest c = new corticalTest();
+    /*       corticalTest c = new corticalTest();
      List<Author> authors = c.getAuthors();
      Map<URI, String> unesco = c.getWords(150);
      Map<URI, Map<URI, Double>> result = c.getWeights(unesco, authors);
@@ -342,7 +323,6 @@ public class corticalTest {
         return Collections.emptyList();
     }
 
-
 //        UnescoNomeclatureConnection conn = UnescoNomeclatureConnection.getInstance();
 //        UnescoNomeclature unesco = new UnescoNomeclature(conn);
 //
@@ -379,23 +359,22 @@ public class corticalTest {
 //
 //        System.out.print("La mejor categoria es :" + bestCategory);
 //        conn.close();
-
 //        String txt = "[{\"text\":\"6111 aluminium alloy;active site;adhesion;adverse effect;analytical chemistry;aqueous solution;atomic force microscopy;calcium;ceramic materials;ceramic matrix composite;cerium;cerium iv oxide cerium iii oxide cycle;composite material;conversion coating;corrosion;chemistry;chromatography;dielectric spectroscopy;dysprosium;electrical impedance;electrospinning;environmental chemistry;environmental impact statement;erosion corrosion;forensic engineering;heat treating;inorganic chemistry;intergranular corrosion;iron;lanthanide;laser;linear polarization;magnesium;manganese;materials science;metal;metallurgy;microstructure;mineralogy;morphology;nanocomposite;nanofiber;nanoparticle;nanotechnology;nickel;nitride;nitrogen;nuclear chemistry;nuclear magnetic resonance;nuclear physics;nuclear reactor;optical microscope;organic chemistry;particle size;performance;phosphorus;physical chemistry;physics;polarization;polymer;polymer chemistry;radiochemistry;residual stress;room temperature;scanning electron microscope;smart material;sol gel;surface modification;thin film;tissue engineering;titanium oxide;uranium;visual inspection;wear;x ray crystallography;x ray photoelectron spectroscopy\"},{\"text\":\"Science space (2104 2102 3324);Soil Science (Soil Science) ;Oceanography;Meteorology ;Hydrology ;Geophysics;Geology;Geography ;Geodesy;Geochemistry;Climatology ;Atmospheric sciences ;Space physiology ;Space medicine;Exobiology;Soil physics;Soil morphology and genesis;Soil mineralogy;Soil microbiology;Soil mechanics (agriculture);Soil engineering;Soil xonservation;Soil classification;Soil chemistry;soil cartography;Soil biology;Soil biochemistry;Marine aquaculture (oceanography);Renewable resources (oceanography);Marine Geology (oceanography);Underwater sounds;Shore and near-shore processes;Sea ice ;Sea-air interactions ;Physical oceanography ;Ocean-bottom processes ;Marine zoology ;Marine botany ;Descriptive oceanography;Chemical oceanography;Biological oceanography;Weather modification;Weather analysis;Tropical meteorology;Synoptic meteorology;Satellite meteorology ;Rocket meteorology;Radio meteorology;Radar meteorology;Polar meteorology;Operational forecasting (weather);Observation briefing (weather);Numerical weather prediction;Micrometeorology;Mesometeorología;Marine meteorology ;Industrial meteorology;Hydrometeorology ;Extended weather forecasting;Air pollution ;Agricultural mMeteorology;Transpiration;Surface waters;Soil moisture;Snow;Quality of water ;Precipitation;Permafrost;Limnology;Ice ;Hydrography;Hydrobiology;Groundwater;Glaciology ;Evaporation;Erosion (water);Tectonics;Solid-earth and geophysics;Seismology and seismic exploration;Paleomagnetism;Heat flow (earth);Gravity (earth) and gravity exploration ;Geomagnetism and magnetic explotarion;Well log analysis;Volcanology;Structural geology;Stratigraphy ;Sedimentology;Rock mechanisms;Remote sensing (geology);Photogeology;Petrology, sedimentary;Petrology, igneous and metamorphic;Petroleum geology ;Mineralogy;Mineral deposits;Glacial geology ;Geothermal processes and energy ;Geomorphology;Geological surveys;Geohydrology ;Environmental geology;Engineering geology;Coal geologi ;Areal geology;Topographic geography;Physical geography;Medical geography;Location theory;Land utilization ;Geography of natural resources;Geographical cartography;Biogeography ;Theoretical geodesy;Satellite geodesy ;Physical geodesy;Geodetic surveying;Geodesic photogrammetry;Geodesic navigation;Geodesic cartography;Geodesic astronomy ;Trace elements distribution;Stable isotopes;Organic geochemistry;Low temperatures geochemistry;High temperature geochemistry;Geochronology and radio isotope;Exploration geochemistry;Experimental petrology;Cosmochemistry ;Regional climatology;Physical climatology;Paleoclimatology;Microclimatology;Bioclimatology;Applied climatology;Analytical climatology;Solar wind;Radioactive transfer;Precipitation physics;Numerical modelling;Magnetospheric waves;Magnetospheric particles;Ionosphere;Geomagnetic pulsations;Dissemination (atmospheric);Cosmic rays ;Cloud physics;Aurora;Atmospheric turbulence\"}]";
 //        String txt1 = "6111 aluminium alloy;active site;adhesion;adverse effect;analytical chemistry;aqueous solution;atomic force microscopy;calcium;ceramic materials;ceramic matrix composite;cerium;cerium iv oxide cerium iii oxide cycle;composite material;conversion coating;corrosion;chemistry;chromatography;dielectric spectroscopy;dysprosium;electrical impedance;electrospinning;environmental chemistry;environmental impact statement;erosion corrosion;forensic engineering;heat treating;inorganic chemistry;intergranular corrosion;iron;lanthanide;laser;linear polarization;magnesium;manganese;materials science;metal;metallurgy;microstructure;mineralogy;morphology;nanocomposite;nanofiber;nanoparticle;nanotechnology;nickel;nitride;nitrogen;nuclear chemistry;nuclear magnetic resonance;nuclear physics;nuclear reactor;optical microscope;organic chemistry;particle size;performance;phosphorus;physical chemistry;physics;polarization;polymer;polymer chemistry;radiochemistry;residual stress;room temperature;scanning electron microscope;smart material;sol gel;surface modification;thin film;tissue engineering;titanium oxide;uranium;visual inspection;wear;x ray crystallography;x ray photoelectron spectroscopy";
 //        String txt2 = "Science space (2104 2102 3324);Soil Science (Soil Science) ;Oceanography;Meteorology ;Hydrology ;Geophysics;Geology;Geography ;Geodesy;Geochemistry;Climatology ;Atmospheric sciences ;Space physiology ;Space medicine;Exobiology;Soil physics;Soil morphology and genesis;Soil mineralogy;Soil microbiology;Soil mechanics (agriculture);Soil engineering;Soil xonservation;Soil classification;Soil chemistry;soil cartography;Soil biology;Soil biochemistry;Marine aquaculture (oceanography);Renewable resources (oceanography);Marine Geology (oceanography);Underwater sounds;Shore and near-shore processes;Sea ice ;Sea-air interactions ;Physical oceanography ;Ocean-bottom processes ;Marine zoology ;Marine botany ;Descriptive oceanography;Chemical oceanography;Biological oceanography;Weather modification;Weather analysis;Tropical meteorology;Synoptic meteorology;Satellite meteorology ;Rocket meteorology;Radio meteorology;Radar meteorology;Polar meteorology;Operational forecasting (weather);Observation briefing (weather);Numerical weather prediction;Micrometeorology;Mesometeorología;Marine meteorology ;Industrial meteorology;Hydrometeorology ;Extended weather forecasting;Air pollution ;Agricultural mMeteorology;Transpiration;Surface waters;Soil moisture;Snow;Quality of water ;Precipitation;Permafrost;Limnology;Ice ;Hydrography;Hydrobiology;Groundwater;Glaciology ;Evaporation;Erosion (water);Tectonics;Solid-earth and geophysics;Seismology and seismic exploration;Paleomagnetism;Heat flow (earth);Gravity (earth) and gravity exploration ;Geomagnetism and magnetic explotarion;Well log analysis;Volcanology;Structural geology;Stratigraphy ;Sedimentology;Rock mechanisms;Remote sensing (geology);Photogeology;Petrology, sedimentary;Petrology, igneous and metamorphic;Petroleum geology ;Mineralogy;Mineral deposits;Glacial geology ;Geothermal processes and energy ;Geomorphology;Geological surveys;Geohydrology ;Environmental geology;Engineering geology;Coal geologi ;Areal geology;Topographic geography;Physical geography;Medical geography;Location theory;Land utilization ;Geography of natural resources;Geographical cartography;Biogeography ;Theoretical geodesy;Satellite geodesy ;Physical geodesy;Geodetic surveying;Geodesic photogrammetry;Geodesic navigation;Geodesic cartography;Geodesic astronomy ;Trace elements distribution;Stable isotopes;Organic geochemistry;Low temperatures geochemistry;High temperature geochemistry;Geochronology and radio isotope;Exploration geochemistry;Experimental petrology;Cosmochemistry ;Regional climatology;Physical climatology;Paleoclimatology;Microclimatology;Bioclimatology;Applied climatology;Analytical climatology;Solar wind;Radioactive transfer;Precipitation physics;Numerical modelling;Magnetospheric waves;Magnetospheric particles;Ionosphere;Geomagnetic pulsations;Dissemination (atmospheric);Cosmic rays ;Cloud physics;Aurora;Atmospheric turbulence";
 //        getEntities(txt);
 //        p.CompareText(StringUtils.stripAccents(txt1), StringUtils.stripAccents(txt2));
 //        corticalTest c = new corticalTest();
- //       List<Author> authors = c.getAuthors();
- //       Map<URI, String> unesco = c.getWords(150);
- //       Map<URI, Map<URI, Double>> result = c.getWeights(unesco, authors);
- //       for (Map.Entry<URI, Map<URI, Double>> r : result.entrySet()) {
-  //          System.out.println(r.getKey());
-   //         for (Map.Entry<URI, Double> score : r.getValue().entrySet()) {
-   //             System.out.println("\t\t" + score.getKey() + "\t\t" + score.getValue());
+    //       List<Author> authors = c.getAuthors();
+    //       Map<URI, String> unesco = c.getWords(150);
+    //       Map<URI, Map<URI, Double>> result = c.getWeights(unesco, authors);
+    //       for (Map.Entry<URI, Map<URI, Double>> r : result.entrySet()) {
+    //          System.out.println(r.getKey());
+    //         for (Map.Entry<URI, Double> score : r.getValue().entrySet()) {
+    //             System.out.println("\t\t" + score.getKey() + "\t\t" + score.getValue());
     //        }
-   //     }
- //   }
+    //     }
+    //   }
 /*
     public Map<URI, Map<URI, Double>> getWeights(Map<URI, String> taxonomy, List<Author> authors) throws IOException, InterruptedException {
         Map<URI, Map<URI, Double>> authorScores = new HashMap<>();
@@ -456,5 +435,5 @@ public class corticalTest {
         }
         return Collections.emptyList();
     }
-*/
+     */
 }
