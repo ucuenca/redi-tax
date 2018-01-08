@@ -6,6 +6,7 @@
 package corticalClasification;
 
 import com.google.common.base.Joiner;
+import com.squareup.javapoet.ClassName;
 import ec.edu.cedia.redi.Author;
 
 import corticalClasification.File;
@@ -21,8 +22,10 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.io.IOException;
+import static java.lang.Double.compare;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +43,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 import org.openrdf.model.URI;
+import org.openrdf.model.impl.URIImpl;
 import plublication.Preprocessing;
 
 /**
@@ -47,6 +51,38 @@ import plublication.Preprocessing;
  * @author joe
  */
 public class corticalTest {
+
+    private static List<AreaUnesco>  filterAreas( List<AreaUnesco> l , int n , double porcentage) {
+         
+         Collections.sort(l , new AreaUnesco().reversed() );
+         
+        if (n >= l.size()){
+             return l;
+            }
+               
+                Double min = 0.0;
+           for (int i=0 ; i< l.size() ;i++) {
+                           
+                if (i==0) {
+                    min = l.get(i).getScore() - l.get(i).getScore()*porcentage;
+                }else {
+                    if (l.get(i).getScore() < min || n < i+1 ){
+                      return l.subList(0, i);
+                    }
+                }
+                         
+           }
+           
+        return l;
+    }
+
+    private static void registerAuthorAreas(URI uri, List<AreaUnesco> filterAreas) {
+        System.out.println ("Resultado Final: "+uri);
+        for (AreaUnesco a  :filterAreas) {
+        System.out.print ("|"+a.getLabel()+"-"+a.getScore());
+        }
+        ///throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 
     /**
      * @param args the command line arguments
@@ -69,12 +105,16 @@ public class corticalTest {
         List<Author> authors = r.getAuthors();
         
         Map<String,  String[]> myHashMap = new HashMap<> ();
+        Map<String,  List<AreaUnesco>> authorAreas = new HashMap<> ();
        /* String[] e = {"val1.1", "val1.2"};
  
         myHashMap.put("valor1", neAuthor actualw String[]{"val1","val2"} );
         myHashMap.put("valor3", new String[]{"val1.1","val2.1"});*/
         
         File f = new File ();
+     
+   
+        
         
         for (Author a : authors) {
          System.out.println(a.getURI());
@@ -86,7 +126,7 @@ public class corticalTest {
                 actual = a;
             }*/
          actual = a;
-        
+        List<AreaUnesco> areasList = new ArrayList ();
         // continue;
 
         // System.out.print (p.CompareText("Computer applications , Archive automation, Artificial intelligence, Expert systems,  Pattern recognition, Robotics",
@@ -116,7 +156,7 @@ public class corticalTest {
                     for (URI nnl : listNl) {
                         String label6 = unesco.label(nnl, "en").getLabel();
                         if (!label6.contains("Other")) {
-                            System.out.println(label6);
+                         //   System.out.println(label6);
                             // arrayLabels = arrayLabels + ", " + label6.replace(".", "");
                             arrayLabels4 = arrayLabels4 + ", " + StringUtils.stripAccents(label6);
                             count++;
@@ -132,6 +172,9 @@ public class corticalTest {
                     } else {
                         val = ((BigDecimal) number).doubleValue();
                     }
+                    
+                    AreaUnesco area = new AreaUnesco (label4, nl , val  );
+                     areasList.add(area);
 
                     if (bestScore.doubleValue() < val.doubleValue()) {
                         bestScore = val;
@@ -146,12 +189,16 @@ public class corticalTest {
 
         }
            
-        System.out.println("La mejor categoria para "+actual.getURI().toString()+" es :" + bestCategory + bestScore);
-        myHashMap.put (actual.getURI().toString() ,new String [] {bestCategory,bestCategoryURI.toString()});
-         f.writeMapCSV(myHashMap);  
+        //System.out.println("La mejor categoria para "+actual.getURI().toString()+" es :" + bestCategory + bestScore);
+       //authorAreas.put (actual.getURI().toString() , areasList);
+      // myHashMap.put (actual.getURI().toString() ,new String [] {bestCategory,bestCategoryURI.toString()});
+      //   f.writeMapCSV(myHashMap);  
+         registerAuthorAreas (  actual.getURI() , filterAreas ( areasList , 2 , 0.1)); 
         
     }
-        f.writeMapCSV(myHashMap);
+        //f.writeMapCSV(myHashMap);
+      
+        
         conn.close();
     }
 
