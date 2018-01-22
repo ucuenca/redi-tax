@@ -28,6 +28,7 @@ import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.model.vocabulary.FOAF;
 import org.openrdf.model.vocabulary.RDFS;
 import org.openrdf.query.BindingSet;
+import org.openrdf.query.BooleanQuery;
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.QueryLanguage;
@@ -79,6 +80,24 @@ public class Redi {
             connection.close();
         }
         return authors;
+    }
+
+    public boolean isAuthorInCluster(URI author) throws RepositoryException {
+        RepositoryConnection connection = conn.getConnection();
+        try {
+            String query = "ASK {GRAPH ?graph { ?s ?p ?author }}";
+            BooleanQuery q = connection.prepareBooleanQuery(QueryLanguage.SPARQL, query);
+            q.setBinding("graph", vf.createURI(RediRepository.DEFAULT_CONTEXT));
+            q.setBinding("author", author);
+            return q.evaluate();
+        } catch (MalformedQueryException ex) {
+            log.error("Cannot execute query.", ex);
+        } catch (QueryEvaluationException ex) {
+            log.error("Cannot evaluate query.", ex);
+        } finally {
+            connection.close();
+        }
+        return false;
     }
 
     public void store(URI author, List<AreaUnesco> areas) throws RepositoryException {
