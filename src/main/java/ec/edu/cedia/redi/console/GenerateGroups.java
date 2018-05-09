@@ -54,7 +54,7 @@ public class GenerateGroups {
         final Options options = extractAreasOptions();
         CommandLine cmd;
         try {
-            args = new String[]{""};
+//            args = new String[]{""};
             cmd = parser.parse(options, args);
             if (cmd.hasOption("threads")) {
                 int threads = Integer.parseInt(cmd.getOptionValue("threads").trim());
