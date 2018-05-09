@@ -64,11 +64,12 @@ public class Redi {
                     + "  ?a a foaf:Person;"
                     + "    foaf:publications ?p."
                     + "  ?p dct:subject [rdfs:label ?kw] ."
-                    + " GRAPH <http://redi.cedia.edu.ec/context/authors>"
-                    + "{ ?a a foaf:Person }"
+                    + " GRAPH ?author{ "
+                    + "   ?a a foaf:Person }"
                     + "}} GROUP BY ?a";
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
             q.setBinding("graph", vf.createURI(RediRepository.DEFAULT_CONTEXT));
+            q.setBinding("author", vf.createURI(RediRepository.AUTHOR_CONTEXT));
             TupleQueryResult result = q.evaluate();
             while (result.hasNext()) {
                 BindingSet variables = result.next();
@@ -87,9 +88,9 @@ public class Redi {
     public boolean isAuthorInCluster(URI author) throws RepositoryException {
         RepositoryConnection connection = conn.getConnection();
         try {
-            String query = "ASK {GRAPH ?graph { ?s ?p ?author }}";
+            String query = "ASK {GRAPH ?cluster { ?s ?p ?author }}";
             BooleanQuery q = connection.prepareBooleanQuery(QueryLanguage.SPARQL, query);
-            q.setBinding("graph", vf.createURI("http://redi.cedia.edu.ec/context/clusters"));
+            q.setBinding("cluster", vf.createURI(RediRepository.CLUSTERS_CONTEXT));
             q.setBinding("author", author);
             return q.evaluate();
         } catch (MalformedQueryException ex) {
@@ -118,7 +119,7 @@ public class Redi {
         }
         try {
             connection.begin();
-            connection.add(dataset, vf.createURI("http://redi.cedia.edu.ec/context/clusters"));
+            connection.add(dataset, vf.createURI(RediRepository.CLUSTERS_CONTEXT));
         } catch (RepositoryException ex) {
             log.error("", ex);
         } finally {

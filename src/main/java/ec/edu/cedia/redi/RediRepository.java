@@ -37,6 +37,8 @@ public class RediRepository implements AutoCloseable {
     private final static String QUERY_ENDPOINT_REDI = ENDPOINT_REDI + "/select";
     private final static String UPDATE_ENDPOINT_REDI = ENDPOINT_REDI + "/update";
     public final static String DEFAULT_CONTEXT = "https://redi.cedia.edu.ec/context/redi";
+    public final static String AUTHOR_CONTEXT = "https://redi.cedia.edu.ec/context/authors";
+    public final static String CLUSTERS_CONTEXT = "https://redi.cedia.edu.ec/context/clusters";
     private static final Logger log = LoggerFactory.getLogger(UnescoNomeclatureConnection.class);
     private static final Map<String, String> headers = new HashMap<>();
     private SPARQLRepository repository;
