@@ -99,21 +99,29 @@ public class corticalTest {
         File f = new File();
 
         for (Author a : authors) {
-            System.out.println(a.getURI());
+            System.out.println(a.getURI()+" "+r.isAuthorInCluster(a.getURI()));
+          
+         
+            
         }
 
         for (Author a : authors) {
-            /*  if (a.getURI().toString().contains("saquicela")) {
-                actual = a;
-            }*/
-            actual = a;
+              actual = a;
+              System.out.println("AUTOR: " + actual.getURI());
+      
+            if (r.isAuthorInCluster(a.getURI())){
+              System.out.println( actual.getURI()+"Procesado");
+            continue;
+            }
+            
+         
             List<AreaUnesco> areasList = new ArrayList();
             // continue;
 
             // System.out.print (p.CompareText("Computer applications , Archive automation, Artificial intelligence, Expert systems,  Pattern recognition, Robotics",
             //        "TECHNOLOGIES OF INFORMATION AND COMMUNICATION, Big Data, ontologies, NATURAL LANGUAGE PROCESSING, WEB SERVICE, Data Integration"));
             // String userKeywords = "TECHNOLOGIES OF INFORMATION AND COMMUNICATION, Big Data, ontologies, NATURAL LANGUAGE PROCESSING, WEB SERVICE, Data Integration";
-            System.out.println("AUTOR: " + actual.getURI());
+         
             String userKeywords = actual.getKeywords();
 
             String bestCategory = "";

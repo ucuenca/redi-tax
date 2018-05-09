@@ -57,13 +57,15 @@ public class Redi {
         RepositoryConnection connection = conn.getConnection();
         List<Author> authors = new ArrayList<>();
         try {
-            String query = "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n"
+            String query = "PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
                     + "PREFIX dct: <http://purl.org/dc/terms/> "
                     + "SELECT ?a (group_concat(DISTINCT ?kw ; separator=\";\") as ?kws) "
                     + "WHERE { GRAPH ?graph {"
                     + "  ?a a foaf:Person;"
                     + "    foaf:publications ?p."
-                    + "  ?p dct:subject [rdfs:label ?kw]"
+                    + "  ?p dct:subject [rdfs:label ?kw] ."
+                    + " GRAPH <http://redi.cedia.edu.ec/context/authors>"
+                    + "{ ?a a foaf:Person }"
                     + "}} GROUP BY ?a";
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
             q.setBinding("graph", vf.createURI(RediRepository.DEFAULT_CONTEXT));
@@ -87,7 +89,7 @@ public class Redi {
         try {
             String query = "ASK {GRAPH ?graph { ?s ?p ?author }}";
             BooleanQuery q = connection.prepareBooleanQuery(QueryLanguage.SPARQL, query);
-            q.setBinding("graph", vf.createURI(RediRepository.DEFAULT_CONTEXT));
+            q.setBinding("graph", vf.createURI("http://redi.cedia.edu.ec/context/clusters"));
             q.setBinding("author", author);
             return q.evaluate();
         } catch (MalformedQueryException ex) {

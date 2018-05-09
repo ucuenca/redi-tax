@@ -17,6 +17,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -129,7 +130,7 @@ public class Preprocessing {
        // StringEntity textEntity = new StringEntity(" { \"elements\" : [{ \"term\": \"Pablo Picasso\"  }, " +
        // "{ \"text\": \"Gustav Klimt was born in Baumgarten, near Vienna in Austria-Hungary, the second of seven children\"}]}");
         System.out.println(jsonArr.toJSONString());
-        StringEntity textEntity = new StringEntity( jsonArr.toJSONString()) ;
+        StringEntity textEntity = new StringEntity( jsonArr.toJSONString() , Charset.defaultCharset());
         post.setEntity(textEntity);
       //  post.addHeader("api-key", "1c556a80-8595-11e6-a057-97f4c970893c");
         post.addHeader("Content-Type", "application/json");
