@@ -56,11 +56,11 @@
                 <version>2.0.0</version>
                 <configuration>
                     <programs>
-                         <program>
-                          <mainClass>corticalClasification.GenerateGroups</mainClass>
-                            <id>cortical</id>
+                        <program>
+                            <mainClass>ec.edu.cedia.redi.console.GenerateGroups</mainClass>
+                            <id>generateGroups</id>
                         </program> 
-                          <program>
+                        <program>
                             <mainClass>ec.edu.cedia.redi.console.UnescoExec</mainClass>
                             <id>unesco</id>
                         </program>
