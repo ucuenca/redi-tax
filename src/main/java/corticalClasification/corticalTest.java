@@ -85,6 +85,7 @@ public class corticalTest {
         Preprocessing p = Preprocessing.getInstance();
 
         RediRepository rp = RediRepository.getInstance();
+        
         Redi r = new Redi(rp);
         Author actual = null;
         List<Author> authors = r.getAuthors();
