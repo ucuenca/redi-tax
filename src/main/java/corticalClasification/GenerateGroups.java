@@ -3,8 +3,8 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package corticalClasification;
 
+package corticalClasification;
 import com.google.common.base.Joiner;
 import ec.edu.cedia.redi.Author;
 import ec.edu.cedia.redi.Redi;
@@ -33,12 +33,40 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.openrdf.model.URI;
 import plublication.Preprocessing;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author joe
  */
-public class corticalTest {
+public class GenerateGroups {
+
+    /**
+     * @param args the command line arguments
+     */
+    private static final Logger log = LoggerFactory.getLogger(GenerateGroups.class);
+    
+   /* public static void main(String[] args) {
+    
+            
+            
+    }*/
+    
+    /*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+
+
+
+/**
+ *
+ * @author joe
+ */
+
 
     private static List<AreaUnesco> filterAreas(List<AreaUnesco> l, int n, double porcentage) {
 
@@ -83,13 +111,11 @@ public class corticalTest {
         List<URI> listUris = unesco.twoDigitResources();
 
         Preprocessing p = Preprocessing.getInstance();
-
         RediRepository rp = RediRepository.getInstance();
         
         Redi r = new Redi(rp);
         Author actual = null;
         List<Author> authors = r.getAuthors();
-
         Map<String, String[]> myHashMap = new HashMap<>();
         Map<String, List<AreaUnesco>> authorAreas = new HashMap<>();
         /* String[] e = {"val1.1", "val1.2"};
@@ -440,3 +466,6 @@ public class corticalTest {
     }
      */
 }
+
+    
+

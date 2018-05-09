@@ -66,7 +66,7 @@ public class Redi {
                     + "  ?p dct:subject [rdfs:label ?kw] ."
                     + " GRAPH ?author{ "
                     + "   ?a a foaf:Person }"
-                    + "}} GROUP BY ?a";
+                    + "}} GROUP BY ?a offset 1500 limit 100";
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
             q.setBinding("graph", vf.createURI(RediRepository.DEFAULT_CONTEXT));
             q.setBinding("author", vf.createURI(RediRepository.AUTHOR_CONTEXT));
