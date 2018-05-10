@@ -57,23 +57,43 @@ public class Redi {
         RepositoryConnection connection = conn.getConnection();
         List<Author> authors = new ArrayList<>();
         try {
-            String query = "PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
-                    + "PREFIX dct: <http://purl.org/dc/terms/> "
-                    + "SELECT ?a (group_concat(DISTINCT ?kw ; separator=\";\") as ?kws) "
-                    + "WHERE { GRAPH ?graph {"
-                    + "  ?a a foaf:Person;"
-                    + "    foaf:publications ?p."
-                    + "  ?p dct:subject [rdfs:label ?kw] ."
-                    + " GRAPH ?author{ "
-                    + "   ?a a foaf:Person }"
-                    + "}} GROUP BY ?a";
+            String query = "PREFIX foaf: <http://xmlns.com/foaf/0.1/> \n"
+                    + "PREFIX dct: <http://purl.org/dc/terms/> \n"
+                    + "SELECT DISTINCT ?a (group_concat(DISTINCT ?kw1 ; separator=\";\") as ?kws1) (group_concat(DISTINCT ?kw2 ; separator=\";\") as ?kws2)\n"
+                    + "WHERE { \n"
+                    + "  GRAPH ?redi {  \n"
+                    + "    ?a a foaf:Person. \n"
+                    + "    OPTIONAL { \n"
+                    + "      ?a foaf:publications [dct:subject ?subject].\n"
+                    + "      ?subject rdfs:label ?kw1 .\n"
+                    + "    }\n"
+                    + "    OPTIONAL { ?a foaf:topic_interest ?topic . }\n"
+                    + "    OPTIONAL { ?topic rdfs:label ?kw2. }\n"
+                    + "  }\n"
+                    + "  GRAPH ?authors {    \n"
+                    + "    ?a a foaf:Person 	\n"
+                    + "  }\n"
+                    + "} GROUP BY ?a";
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
-            q.setBinding("graph", vf.createURI(RediRepository.DEFAULT_CONTEXT));
-            q.setBinding("author", vf.createURI(RediRepository.AUTHOR_CONTEXT));
+            q.setBinding("redi", vf.createURI(RediRepository.DEFAULT_CONTEXT));
+            q.setBinding("authors", vf.createURI(RediRepository.AUTHOR_CONTEXT));
             TupleQueryResult result = q.evaluate();
             while (result.hasNext()) {
                 BindingSet variables = result.next();
-                authors.add(new Author((URI) variables.getBinding("a").getValue(), variables.getBinding("kws").getValue().stringValue()));
+                URI author = (URI) variables.getBinding("a").getValue();
+                String keywords = "";
+                String topics = "";
+                if (variables.getBinding("kws1") != null) {
+                    keywords = variables.getBinding("kws1").getValue().stringValue();
+                }
+                if (variables.getBinding("kws2") != null) {
+                    topics = variables.getBinding("kws2").getValue().stringValue();
+                }
+                String join = (keywords + ";" + topics).trim();
+
+                if (!join.isEmpty()) {
+                    authors.add(new Author(author, join));
+                }
             }
         } catch (MalformedQueryException ex) {
             log.error("Cannot execute query.", ex);
