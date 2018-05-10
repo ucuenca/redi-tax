@@ -26,6 +26,8 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.openrdf.model.URI;
 import org.openrdf.repository.RepositoryException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import plublication.Preprocessing;
 
 /**
@@ -39,6 +41,8 @@ public class KnowledgeAreas {
     private final List<URI> twoDigit;
     private final Preprocessing cortical = Preprocessing.getInstance();
 
+    private static final Logger log = LoggerFactory.getLogger(KnowledgeAreas.class);
+
     public KnowledgeAreas(Redi redi, UnescoNomeclature unesco, List<URI> twoDigit) throws RepositoryException {
         this.redi = redi;
         this.unesco = unesco;
@@ -46,25 +50,23 @@ public class KnowledgeAreas {
     }
 
     public void extractArea(Author author) throws RepositoryException, Exception {
-        System.out.println("AUTOR: " + author.getURI());
         if (redi.isAuthorInCluster(author.getURI())) {
+            log.info("Author done! {}", author.getURI());
             return;
         }
 
+        log.info("Author processing {}", author.getURI());
         List<AreaUnesco> areasList = new ArrayList();
         String userKeywords = author.getKeywords();
 
         String bestCategory = "";
         URI bestCategoryURI = null;
-        Double bestScore = 0.0;
+        double bestScore = 0.0;
         for (URI l : twoDigit) {
-            System.out.println("*********");
             String label2 = unesco.label(l, "en").getLabel();
-            System.out.println(label2);
             List<URI> listN = unesco.narrow(l);
             for (URI nl : listN) {
                 String label4 = unesco.label(nl, "en").getLabel();
-                System.out.println(label4);
                 String arrayLabels4 = label4;
                 if (!label4.contains("Other")) {
                     List<URI> listNl = unesco.narrow(nl);
@@ -77,7 +79,7 @@ public class KnowledgeAreas {
                         }
                     }
 
-                    Double val;
+                    double val;
                     Object number = cortical.CompareText(arrayLabels4, StringUtils.stripAccents(userKeywords), "weightedScoring");
                     if (number instanceof Double) {
                         val = (Double) number;
@@ -88,13 +90,13 @@ public class KnowledgeAreas {
                     AreaUnesco area = new AreaUnesco(label4, nl, val);
                     areasList.add(area);
 
-                    if (bestScore.doubleValue() < val.doubleValue()) {
+                    if (bestScore < val) {
                         bestScore = val;
                         bestCategory = label4;
                         bestCategoryURI = nl;
                     }
-                    System.out.println(author.getURI() + " Score : " + label4 + "-" + val);
-
+                    log.info("\n\tAuthor: {}\n\tArea: {} -> {}\n\tKeywords: {}\n\tScore: {}",
+                            new String[]{author.getURI().stringValue(), label2, label4, userKeywords, String.valueOf(val)});
                 }
             }
         }
@@ -102,15 +104,13 @@ public class KnowledgeAreas {
     }
 
     private List<AreaUnesco> filterAreas(List<AreaUnesco> l, int n, double porcentage) {
-
         Collections.sort(l, new AreaUnesco().reversed());
 
         if (n >= l.size()) {
             return l;
         }
-        Double min = 0.0;
+        double min = 0.0;
         for (int i = 0; i < l.size(); i++) {
-
             if (i == 0) {
                 min = l.get(i).getScore() - l.get(i).getScore() * porcentage;
             } else if (l.get(i).getScore() < min || n < i + 1) {

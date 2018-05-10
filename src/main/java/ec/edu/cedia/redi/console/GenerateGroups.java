@@ -24,6 +24,8 @@ import ec.edu.cedia.redi.unesco.UnescoNomeclature;
 import ec.edu.cedia.redi.unesco.UnescoNomeclatureConnection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -54,7 +56,7 @@ public class GenerateGroups {
         final Options options = extractAreasOptions();
         CommandLine cmd;
         try {
-//            args = new String[]{""};
+//            args = new String[]{"-t 3"};
             cmd = parser.parse(options, args);
             if (cmd.hasOption("threads")) {
                 int threads = Integer.parseInt(cmd.getOptionValue("threads").trim());
@@ -92,30 +94,45 @@ public class GenerateGroups {
                 UnescoNomeclatureConnection conn = UnescoNomeclatureConnection.getInstance();) {
             final Redi redi = new Redi(rediRepository);
             final UnescoNomeclature unesco = new UnescoNomeclature(conn);
-
             final List<URI> twoDigit = unesco.twoDigitResources();
+            log.info("Getting authors...");
             final Iterator<Author> authors = redi.getAuthors().iterator();
-            KnowledgeAreas areas = new KnowledgeAreas(redi, unesco, twoDigit);
-            do {
-                for (int i = 0; i < threads; i++) {
-                    if (authors.hasNext()) {
-                        Thread thread = new Thread() {
-                            public void run() {
-                                try {
-                                    Author author = authors.next();
-                                    areas.extractArea(author);
-                                    log.info(authors.next().getURI().toString());
-                                } catch (Exception ex) {
-                                    log.error("Cannot extract area", ex);
-                                }
-                            }
-                        };
-                        thread.start();
-                    }
-                }
 
-            } while (authors.hasNext());
+            ExecutorService pool = Executors.newFixedThreadPool(threads);
+            while (authors.hasNext()) {
+                Author author = authors.next();
+                pool.execute(new AreasExtractor(author, twoDigit));
+            }
+            pool.shutdown();
         }
+    }
+
+    private static class AreasExtractor implements Runnable {
+
+        private Author author;
+        private List<URI> unescoURIs;
+
+        public AreasExtractor(Author author, List<URI> unescoURIs) {
+            this.author = author;
+            this.unescoURIs = unescoURIs;
+        }
+
+        @Override
+        public void run() {
+            log.info("Executing author {} in thread {}",
+                    new String[]{author.getURI().stringValue()}, Thread.currentThread().getName());
+            try (RediRepository rediRepository = RediRepository.getInstance();
+                    UnescoNomeclatureConnection conn = UnescoNomeclatureConnection.getInstance();) {
+                Redi redi = new Redi(rediRepository);
+                UnescoNomeclature unesco = new UnescoNomeclature(conn);
+
+                KnowledgeAreas areas = new KnowledgeAreas(redi, unesco, unescoURIs);
+                areas.extractArea(author);
+            } catch (Exception ex) {
+                log.error("Cannot extract area", ex);
+            }
+        }
+
     }
 
 }
