@@ -53,6 +53,7 @@ import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sparql.SPARQLRepository;
 import org.openrdf.rio.ParserConfig;
+import org.slf4j.LoggerFactory;
 import tinkerpop.GraphOperations;
 
 /**
@@ -65,7 +66,7 @@ public class Preprocessing {
 
     private final ValueFactory vf = ValueFactoryImpl.getInstance();
     private final static String DEFAULT_CONTEXT = "http://dbpedia.org/sparql";
-    // private Logger log = Logger.getLogger(Writer.class.getName());
+    private org.slf4j.Logger log = LoggerFactory.getLogger(Preprocessing.class);
     private static Preprocessing instanceService = new Preprocessing();
     private HttpClient httpClient = HttpClients.createDefault();
 
@@ -110,40 +111,36 @@ public class Preprocessing {
 
         return executeService(post, null, null);
     }
-    
-    
-        public Object CompareText(String text1, String text2 , String metric) throws UnsupportedEncodingException, IOException {
+
+    public Object CompareText(String text1, String text2, String metric) {
 
         HttpPost post = new HttpPost("http://api.cortical.io/rest/compare?retina_name=en_associative");
 
-        
-       JSONObject json1 = new JSONObject();
-       json1.put("text", text1);
-               
-       JSONObject json2 = new JSONObject();
-       json2.put("text", text2);
-             
-        JSONArray jsonArr = new JSONArray (); 
-        jsonArr.add( json1);
-        jsonArr.add( json2);
-     
-       // StringEntity textEntity = new StringEntity(" { \"elements\" : [{ \"term\": \"Pablo Picasso\"  }, " +
-       // "{ \"text\": \"Gustav Klimt was born in Baumgarten, near Vienna in Austria-Hungary, the second of seven children\"}]}");
+        JSONObject json1 = new JSONObject();
+        json1.put("text", text1);
+
+        JSONObject json2 = new JSONObject();
+        json2.put("text", text2);
+
+        JSONArray jsonArr = new JSONArray();
+        jsonArr.add(json1);
+        jsonArr.add(json2);
+
+        // StringEntity textEntity = new StringEntity(" { \"elements\" : [{ \"term\": \"Pablo Picasso\"  }, " +
+        // "{ \"text\": \"Gustav Klimt was born in Baumgarten, near Vienna in Austria-Hungary, the second of seven children\"}]}");
 //        System.out.println(jsonArr.toJSONString());
-        StringEntity textEntity = new StringEntity( jsonArr.toJSONString() , Charset.defaultCharset());
+        StringEntity textEntity = new StringEntity(jsonArr.toJSONString(), Charset.defaultCharset());
         post.setEntity(textEntity);
-      //  post.addHeader("api-key", "1c556a80-8595-11e6-a057-97f4c970893c");
+        //  post.addHeader("api-key", "1c556a80-8595-11e6-a057-97f4c970893c");
         post.addHeader("Content-Type", "application/json");
         post.addHeader("Cache-Control", "no-cache");
         post.addHeader("Accept", "application/json");
-         post.addHeader("Accept-Encoding", "gzip, deflate");
-        	
+        post.addHeader("Accept-Encoding", "gzip, deflate");
 
-
-        return executeServicePath(post, "$."+metric);
+        return executeServicePath(post, "$." + metric);
     }
 
-    public Object executeService(HttpUriRequest request, @Nullable String key, @Nullable String Secondkey) throws IOException {
+    public Object executeService(HttpUriRequest request, @Nullable String key, @Nullable String Secondkey) {
         while (true) {
             try {
                 HttpResponse response = httpClient.execute(request);
@@ -178,18 +175,21 @@ public class Preprocessing {
                         } else {
                             return "";
                         }
+                    } catch (IOException ex) {
+                        log.error("Problems reading response", ex);
                     }
                 } else {
                     System.out.print(response);
                 }
             } catch (UnknownHostException e) {
-                System.out.printf(e + "Can't reach host in service: Detect Language");
-                // log.log(Priority.WARN, "Can"Can't reach host in service: Detect Language"reach host in service: Detect Language");
+                log.error("Can't reach host in service: Detect Language", e);
+            } catch (IOException ex) {
+                log.error("Cannot make request", ex);
             }
         }
     }
 
-    public Object executeServicePath(HttpUriRequest request, @Nullable String path) throws IOException {
+    public Object executeServicePath(HttpUriRequest request, @Nullable String path) {
         while (true) {
             try {
                 HttpResponse response = httpClient.execute(request);
@@ -203,11 +203,12 @@ public class Preprocessing {
                         return JsonPath.read(jsonResult, path);
                     }
                 } else {
-                    System.out.print(response);
+                    log.error(response.toString());
                 }
             } catch (UnknownHostException e) {
-                System.out.printf(e + "Can't reach host in service: Detect Language");
-                // log.log(Priority.WARN, "Can"Can't reach host in service: Detect Language"reach host in service: Detect Language");
+                log.error("Can't reach host in service: Detect Language", e);
+            } catch (IOException ex) {
+                log.error("Cannot make request", ex);
             }
         }
     }

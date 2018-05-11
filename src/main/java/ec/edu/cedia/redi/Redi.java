@@ -17,6 +17,7 @@
 package ec.edu.cedia.redi;
 
 import corticalClasification.AreaUnesco;
+import ec.edu.cedia.redi.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 import org.openrdf.model.Model;
@@ -92,7 +93,7 @@ public class Redi {
                 String join = (keywords + ";" + topics).trim();
 
                 if (!join.isEmpty()) {
-                    authors.add(new Author(author, join));
+                    authors.add(new Author(author, StringUtils.processTopics(join)));
                 }
             }
         } catch (MalformedQueryException ex) {
