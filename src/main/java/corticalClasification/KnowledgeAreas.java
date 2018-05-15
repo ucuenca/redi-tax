@@ -18,13 +18,13 @@ package corticalClasification;
 
 import ec.edu.cedia.redi.Author;
 import ec.edu.cedia.redi.Redi;
-import ec.edu.cedia.redi.unesco.UnescoNomeclature;
-import java.math.BigDecimal;
-import java.util.ArrayList;
+import ec.edu.cedia.redi.unesco.model.UnescoHierarchy;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
-import org.openrdf.model.URI;
 import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,16 +37,16 @@ import plublication.Preprocessing;
 public class KnowledgeAreas {
 
     private final Redi redi;
-    private final UnescoNomeclature unesco;
-    private final List<URI> twoDigit;
+//    private final UnescoNomeclature unesco;
+    private final List<UnescoHierarchy> unescoDataset;
     private final Preprocessing cortical = Preprocessing.getInstance();
+    private JSONArray comparations = new JSONArray();
 
     private static final Logger log = LoggerFactory.getLogger(KnowledgeAreas.class);
 
-    public KnowledgeAreas(Redi redi, UnescoNomeclature unesco, List<URI> twoDigit) throws RepositoryException {
+    public KnowledgeAreas(Redi redi, List<UnescoHierarchy> unescoDataset) {
         this.redi = redi;
-        this.unesco = unesco;
-        this.twoDigit = twoDigit;
+        this.unescoDataset = unescoDataset;
     }
 
     public void extractArea(Author author) throws RepositoryException, Exception {
@@ -56,49 +56,23 @@ public class KnowledgeAreas {
         }
 
         log.info("Author processing {}", author.getURI());
-        List<AreaUnesco> areasList = new ArrayList();
+        LinkedList<AreaUnesco> areasList = new LinkedList();
         String userKeywords = author.getKeywords();
 
-        String bestCategory = "";
-        URI bestCategoryURI = null;
-        double bestScore = 0.0;
-        for (URI l : twoDigit) {
-            String label2 = unesco.label(l, "en").getLabel();
-            List<URI> listN = unesco.narrow(l);
-            for (URI nl : listN) {
-                String label4 = unesco.label(nl, "en").getLabel();
-                String arrayLabels4 = label4;
-                if (!label4.contains("Other")) {
-                    List<URI> listNl = unesco.narrow(nl);
-                    int count = 0;
-                    for (URI nnl : listNl) {
-                        String label6 = unesco.label(nnl, "en").getLabel();
-                        if (!label6.contains("Other")) {
-                            arrayLabels4 = arrayLabels4 + ", " + StringUtils.stripAccents(label6);
-                            count++;
-                        }
-                    }
-
-                    double val;
-                    Object number = cortical.CompareText(arrayLabels4, StringUtils.stripAccents(userKeywords), "weightedScoring");
-                    if (number instanceof Double) {
-                        val = (Double) number;
-                    } else {
-                        val = ((BigDecimal) number).doubleValue();
-                    }
-
-                    AreaUnesco area = new AreaUnesco(label4, nl, val);
-                    areasList.add(area);
-
-                    if (bestScore < val) {
-                        bestScore = val;
-                        bestCategory = label4;
-                        bestCategoryURI = nl;
-                    }
-                    log.info("\n\tAuthor: {}\n\tArea: {} -> {}\n\tKeywords: {}\n\tScore: {}",
-                            new String[]{author.getURI().stringValue(), label2, label4, userKeywords, String.valueOf(val)});
-                }
-            }
+        for (UnescoHierarchy h : unescoDataset) {
+            String arrayLabels4 = h.getLevel4() + ", " + h.getLevels6();
+            addComparation(arrayLabels4, StringUtils.stripAccents(userKeywords));
+            AreaUnesco area = new AreaUnesco(h.getLevel4(), h.getLevel4Uri());
+            areasList.add(area);
+            log.info("\n\tAuthor: {}\n\tArea: {} -> {}\n\tKeywords: {}\n\tScore: {}",
+                    new String[]{author.getURI().stringValue(), h.getLevel2(), h.getLevel4(), userKeywords, String.valueOf(0.0)});
+        }
+        double[] scores = cortical.compareTextBulk(getComparationsString(), "weightedScoring");
+        if (scores.length != areasList.size()) {
+            throw new Exception(String.format("scores lenght (%s) must be equal to areas length (%s)", scores.length, areasList.size()));
+        }
+        for (int i = 0; i < areasList.size(); i++) {
+            areasList.get(i).setScore(scores[i]);
         }
         redi.store(author.getURI(), filterAreas(areasList, 2, 0.1));
     }
@@ -118,5 +92,25 @@ public class KnowledgeAreas {
             }
         }
         return l;
+    }
+
+    private void addComparation(String t1, String t2) {
+        JSONObject json1 = new JSONObject();
+        json1.put("text", t1);
+        JSONObject json2 = new JSONObject();
+        json2.put("text", t2);
+
+        JSONArray jsonArr = new JSONArray();
+        jsonArr.add(json1);
+        jsonArr.add(json2);
+        comparations.add(jsonArr);
+    }
+
+    private JSONArray getComparations() {
+        return comparations;
+    }
+
+    private String getComparationsString() {
+        return comparations.toJSONString();
     }
 }

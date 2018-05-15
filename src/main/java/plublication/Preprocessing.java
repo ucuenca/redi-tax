@@ -140,6 +140,26 @@ public class Preprocessing {
         return executeServicePath(post, "$." + metric);
     }
 
+    public double[] compareTextBulk(String bulk, String metric) {
+
+        HttpPost post = new HttpPost("http://api.cortical.io/rest/compare/bulk?retina_name=en_associative");
+
+        StringEntity textEntity = new StringEntity(bulk, Charset.defaultCharset());
+        post.setEntity(textEntity);
+        post.addHeader("Content-Type", "application/json");
+        post.addHeader("Cache-Control", "no-cache");
+        post.addHeader("Accept", "application/json");
+        post.addHeader("Accept-Encoding", "gzip, deflate");
+
+        JSONArray result = (JSONArray) executeServicePath(post, "$.[*]." + metric);
+        double[] scores = new double[result.size()];
+        for (int i = 0; i < result.size(); i++) {
+            double score = Double.parseDouble(String.valueOf(result.get(i)));
+            scores[i] = score;
+        }
+        return scores;
+    }
+
     public Object executeService(HttpUriRequest request, @Nullable String key, @Nullable String Secondkey) {
         while (true) {
             try {

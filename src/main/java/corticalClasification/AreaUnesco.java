@@ -16,15 +16,20 @@ public class AreaUnesco implements Comparator<AreaUnesco> {
 
     private String label;
     private URI uri;
-    private Double Score;
+    private Double score;
 
     public AreaUnesco() {
     }
 
-    public AreaUnesco(String label, URI uri, Double Score) {
+    public AreaUnesco(String label, URI uri, double score) {
         this.label = label;
         this.uri = uri;
-        this.Score = Score;
+        this.score = score;
+    }
+
+    public AreaUnesco(String label, URI uri) {
+        this.label = label;
+        this.uri = uri;
     }
 
     public String getLabel() {
@@ -44,11 +49,11 @@ public class AreaUnesco implements Comparator<AreaUnesco> {
     }
 
     public Double getScore() {
-        return Score;
+        return score;
     }
 
     public void setScore(Double Score) {
-        this.Score = Score;
+        this.score = Score;
     }
 
     @Override

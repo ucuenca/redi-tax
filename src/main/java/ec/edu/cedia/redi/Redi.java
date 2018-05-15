@@ -55,6 +55,11 @@ public class Redi {
     }
 
     public List<Author> getAuthors() throws RepositoryException {
+        return getAuthors(-1, -1);
+    }
+
+    public List<Author> getAuthors(int offset, int limit) throws RepositoryException {
+        log.info("Getting authors...");
         RepositoryConnection connection = conn.getConnection();
         List<Author> authors = new ArrayList<>();
         try {
@@ -75,6 +80,9 @@ public class Redi {
                     + "    ?a a foaf:Person 	\n"
                     + "  }\n"
                     + "} GROUP BY ?a";
+            if (offset != -1 && limit != -1) {
+                query += String.format("\nOFFSET %s LIMIT %s ", offset, limit);
+            }
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
             q.setBinding("redi", vf.createURI(RediRepository.DEFAULT_CONTEXT));
             q.setBinding("authors", vf.createURI(RediRepository.AUTHOR_CONTEXT));

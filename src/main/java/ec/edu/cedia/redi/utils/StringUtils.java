@@ -45,8 +45,8 @@ public final class StringUtils {
     public static String processTopics(String topics) {
         String result = topics;
         try {
-            String lang = String.valueOf(cortical.detectLanguage(topics));
-            if ("es".equals(lang)) {
+            String lang = String.valueOf(cortical.detectLanguage(topics.toLowerCase()));
+            if (!"en".equals(lang)) {
                 result = String.valueOf(cortical.traductor(topics));
                 result = JSONAraytoString(result);
             }
