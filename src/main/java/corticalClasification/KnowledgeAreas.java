@@ -55,7 +55,7 @@ public class KnowledgeAreas {
         }
 
         log.info("Author processing {}", author.getURI());
-        LinkedList<AreaUnesco> areasList = new LinkedList();
+        LinkedList<AreaUnesco> areasList = new LinkedList<>();
         String authorKeywords = author.getKeywords();
 
         for (UnescoHierarchy h : unescoDataset) {

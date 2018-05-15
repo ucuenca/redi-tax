@@ -26,7 +26,7 @@ public final class StringUtils {
         LinkedList<String> keywords = new LinkedList<>(Arrays.asList(str.split(";")));
 
         str = keywords.stream()
-//                .map(StringUtils::cleanString)
+                .map(StringUtils::cleanString)
                 .distinct()
                 .collect(Collectors.joining(";"));
 
