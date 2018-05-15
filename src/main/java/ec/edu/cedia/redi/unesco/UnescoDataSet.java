@@ -17,6 +17,12 @@
 package ec.edu.cedia.redi.unesco;
 
 import ec.edu.cedia.redi.unesco.model.UnescoHierarchy;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
@@ -31,8 +37,9 @@ import org.slf4j.LoggerFactory;
 public class UnescoDataSet {
 
     private static final Logger log = LoggerFactory.getLogger(UnescoDataSet.class);
+    private static final String PATH = "unesco.bin";
 
-    private final List<UnescoHierarchy> dataset = new ArrayList<>();
+    private List<UnescoHierarchy> dataset = new ArrayList<>();
     private static UnescoDataSet instance;
 
     public static synchronized UnescoDataSet getInstance() {
@@ -54,6 +61,14 @@ public class UnescoDataSet {
 
     private void data() throws Exception {
         log.info("Getting Unesco Dataset...");
+        File f = new File(PATH);
+        if (f.exists()) {
+            dataset = readList();
+            if (dataset != null) {
+                return;
+            }
+        }
+
         try (UnescoNomeclatureConnection conn = UnescoNomeclatureConnection.getInstance();) {
             final UnescoNomeclature unesco = new UnescoNomeclature(conn);
             final List<URI> twoDigit = unesco.twoDigitResources();
@@ -77,6 +92,51 @@ public class UnescoDataSet {
                     }
                 }
             }
+            persistList(dataset);
         }
+    }
+
+    private static void persistList(List<UnescoHierarchy> objectList) {
+        FileOutputStream fos = null;
+        ObjectOutputStream oos = null;
+        try {
+            fos = new FileOutputStream(PATH);
+            oos = new ObjectOutputStream(fos);
+            oos.writeObject(objectList);
+            oos.flush();
+        } catch (IOException ex) {
+            log.error("Cannot store list.", ex);
+        } finally {
+            try {
+                if (oos != null) {
+                    oos.close();
+                }
+                if (fos != null) {
+                    fos.close();
+                }
+            } catch (IOException ex) {
+                log.error("Cannot close streams.", ex);
+            }
+        }
+    }
+
+    private static List<UnescoHierarchy> readList() {
+        FileInputStream fin = null;
+        try {
+            fin = new FileInputStream(PATH);
+            ObjectInputStream ois = new ObjectInputStream(fin);
+            return (List<UnescoHierarchy>) ois.readObject();
+        } catch (IOException | ClassNotFoundException ex) {
+            log.error("Cannot read list.", ex);
+        } finally {
+            try {
+                if (fin != null) {
+                    fin.close();
+                }
+            } catch (IOException ex) {
+                log.error("Cannot close stream.", ex);
+            }
+        }
+        return null;
     }
 }

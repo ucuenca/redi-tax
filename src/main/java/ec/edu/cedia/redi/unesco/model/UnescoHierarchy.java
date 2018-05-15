@@ -16,19 +16,20 @@
  */
 package ec.edu.cedia.redi.unesco.model;
 
+import java.io.Serializable;
 import org.openrdf.model.URI;
 
 /**
  *
  * @author Xavier Sumba <xavier.sumba93@ucuenca.ec>
  */
-public class UnescoHierarchy {
+public class UnescoHierarchy implements Serializable {
 
-    private String lvl2;
-    private String lvl4;
-    private String lvls6;
-    private URI lvl2Uri;
-    private URI lvl4Uri;
+    private final String lvl2;
+    private final String lvl4;
+    private final String lvls6;
+    private final URI lvl2Uri;
+    private final URI lvl4Uri;
 
     public UnescoHierarchy(String lvl2, String lvl4, String lvls6, URI lvl2Uri, URI lvl4Uri) {
         this.lvl2 = lvl2;
