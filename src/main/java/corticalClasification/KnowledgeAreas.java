@@ -37,10 +37,9 @@ import plublication.Preprocessing;
 public class KnowledgeAreas {
 
     private final Redi redi;
-//    private final UnescoNomeclature unesco;
     private final List<UnescoHierarchy> unescoDataset;
     private final Preprocessing cortical = Preprocessing.getInstance();
-    private JSONArray comparations = new JSONArray();
+    private final JSONArray comparations = new JSONArray();
 
     private static final Logger log = LoggerFactory.getLogger(KnowledgeAreas.class);
 
@@ -57,15 +56,15 @@ public class KnowledgeAreas {
 
         log.info("Author processing {}", author.getURI());
         LinkedList<AreaUnesco> areasList = new LinkedList();
-        String userKeywords = author.getKeywords();
+        String authorKeywords = author.getKeywords();
 
         for (UnescoHierarchy h : unescoDataset) {
-            String arrayLabels4 = h.getLevel4() + ", " + h.getLevels6();
-            addComparation(arrayLabels4, StringUtils.stripAccents(userKeywords));
+            String labels = h.getLevel4() + ", " + h.getLevels6();
+            addComparation(labels, StringUtils.stripAccents(authorKeywords));
             AreaUnesco area = new AreaUnesco(h.getLevel4(), h.getLevel4Uri());
             areasList.add(area);
-            log.info("\n\tAuthor: {}\n\tArea: {} -> {}\n\tKeywords: {}\n\tScore: {}",
-                    new String[]{author.getURI().stringValue(), h.getLevel2(), h.getLevel4(), userKeywords, String.valueOf(0.0)});
+            log.info("\n\tAuthor: {}\n\tArea: {} -> {}\n\tKeywords: {}",
+                    new String[]{author.getURI().stringValue(), h.getLevel2(), h.getLevel4(), authorKeywords});
         }
         double[] scores = cortical.compareTextBulk(getComparationsString(), "weightedScoring");
         if (scores.length != areasList.size()) {
@@ -77,17 +76,17 @@ public class KnowledgeAreas {
         redi.store(author.getURI(), filterAreas(areasList, 2, 0.1));
     }
 
-    private List<AreaUnesco> filterAreas(List<AreaUnesco> l, int n, double porcentage) {
+    private List<AreaUnesco> filterAreas(List<AreaUnesco> l, int size, double porcentage) {
         Collections.sort(l, new AreaUnesco().reversed());
 
-        if (n >= l.size()) {
+        if (size >= l.size()) {
             return l;
         }
         double min = 0.0;
         for (int i = 0; i < l.size(); i++) {
             if (i == 0) {
                 min = l.get(i).getScore() - l.get(i).getScore() * porcentage;
-            } else if (l.get(i).getScore() < min || n < i + 1) {
+            } else if (l.get(i).getScore() < min || size < i + 1) {
                 return l.subList(0, i);
             }
         }
@@ -104,10 +103,6 @@ public class KnowledgeAreas {
         jsonArr.add(json1);
         jsonArr.add(json2);
         comparations.add(jsonArr);
-    }
-
-    private JSONArray getComparations() {
-        return comparations;
     }
 
     private String getComparationsString() {

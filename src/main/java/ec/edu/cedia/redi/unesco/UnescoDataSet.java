@@ -57,9 +57,6 @@ public class UnescoDataSet {
         try (UnescoNomeclatureConnection conn = UnescoNomeclatureConnection.getInstance();) {
             final UnescoNomeclature unesco = new UnescoNomeclature(conn);
             final List<URI> twoDigit = unesco.twoDigitResources();
-//            URI a = twoDigit.get(10);
-//            List<URI> twoDigit1 = new ArrayList<>();
-//            twoDigit1.add(a);
             for (URI lvl2 : twoDigit) {
                 String lvl2Str = unesco.label(lvl2, "en").getLabel();
                 List<URI> fourDigit = unesco.narrow(lvl2);

@@ -90,6 +90,7 @@ public class Redi {
             while (result.hasNext()) {
                 BindingSet variables = result.next();
                 URI author = (URI) variables.getBinding("a").getValue();
+                log.info("Getting subjects of author: " + author);
                 String keywords = "";
                 String topics = "";
                 if (variables.getBinding("kws1") != null) {

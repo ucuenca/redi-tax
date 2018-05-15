@@ -26,7 +26,7 @@ public final class StringUtils {
         LinkedList<String> keywords = new LinkedList<>(Arrays.asList(str.split(";")));
 
         str = keywords.stream()
-                .map(StringUtils::cleanString)
+//                .map(StringUtils::cleanString)
                 .distinct()
                 .collect(Collectors.joining(";"));
 
@@ -43,9 +43,10 @@ public final class StringUtils {
     }
 
     public static String processTopics(String topics) {
+        topics = cleanString(topics);
         String result = topics;
         try {
-            String lang = String.valueOf(cortical.detectLanguage(topics.toLowerCase()));
+            String lang = String.valueOf(cortical.detectLanguage(topics));
             if (!"en".equals(lang)) {
                 result = String.valueOf(cortical.traductor(topics));
                 result = JSONAraytoString(result);

@@ -58,7 +58,7 @@ public class GenerateGroups {
         final Options options = extractAreasOptions();
         CommandLine cmd;
         try {
-            args = new String[]{"-t=1", "-o=118", "-l=1"};
+//            args = new String[]{"-t=10", "-o=118", "-l=100"};
             cmd = parser.parse(options, args);
 
             if ((cmd.hasOption("offset") && !cmd.hasOption("limit")) || cmd.hasOption("limit") && !cmd.hasOption("offset")) {
@@ -86,7 +86,9 @@ public class GenerateGroups {
 
     private static void showHelp(String program, Options opts) {
         HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp(program, opts, true);
+        formatter.printHelp(program, "", opts,
+                "Note: in order to process a small batch use both offset and limit options.",
+                true);
     }
 
     private static Options extractAreasOptions() {
