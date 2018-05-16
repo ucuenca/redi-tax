@@ -56,6 +56,7 @@ public class UnescoDataSet {
     }
 
     public List<UnescoHierarchy> getDataset() {
+        log.info("Getting {} items.", dataset.size());
         return dataset;
     }
 

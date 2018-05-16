@@ -77,12 +77,12 @@ public class AreaUnesco implements Comparator<AreaUnesco> {
 
     @Override
     public int compare(AreaUnesco o1, AreaUnesco o2) {
-        int res = o1.getScore().compareTo(o2.getScore());
-        if (res == 0) {
-            return o1.getScore() < o2.getScore() ? -1 : 1;
-        } else {
-            return res;
-        }
+        return o1.getScore().compareTo(o2.getScore());
+//        if (res == 0) {
+//            return o1.getScore() < o2.getScore() ? -1 : 1;
+//        } else {
+//            return res;
+//        }
     }
 
 }

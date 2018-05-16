@@ -58,7 +58,8 @@ public class GenerateGroups {
         final Options options = extractAreasOptions();
         CommandLine cmd;
         try {
-//            args = new String[]{"-t=10", "-o=118", "-l=100"};
+//            args = new String[]{"-t=4", "-o=118", "-l=100"};
+//            args = new String[]{"-t=3"};
             cmd = parser.parse(options, args);
 
             if ((cmd.hasOption("offset") && !cmd.hasOption("limit")) || cmd.hasOption("limit") && !cmd.hasOption("offset")) {
@@ -68,11 +69,12 @@ public class GenerateGroups {
 
             if (cmd.hasOption("threads")) {
                 int threads = Integer.parseInt(cmd.getOptionValue("threads").trim());
+                boolean filter = cmd.hasOption("filter-authors");
                 if (cmd.hasOption("offset") && cmd.hasOption("limit")) {
                     offset = Integer.parseInt(cmd.getOptionValue("offset").trim());
                     limit = Integer.parseInt(cmd.getOptionValue("limit").trim());
                 }
-                extractAreas(threads);
+                extractAreas(threads, filter);
             } else {
                 showHelp("generateGroups", options);
             }
@@ -113,21 +115,28 @@ public class GenerateGroups {
                 .valueSeparator('=')
                 .desc("Limit number of authors in a the SPARQL query.")
                 .build();
+        final Option filterAuthorsOption = Option.builder("f")
+                .required(false)
+                .longOpt("filter-authors")
+                .hasArg(false)
+                .desc("Filter authors already proccessed. Default value: false.")
+                .build();
         final Options options = new Options();
         options.addOption(threadsOption);
         options.addOption(offsetOption);
         options.addOption(limitOption);
+        options.addOption(filterAuthorsOption);
         return options;
     }
 
-    private static void extractAreas(int threads) throws Exception {
+    private static void extractAreas(int threads, boolean filterAuthorsProcessed) throws Exception {
         try (RediRepository rediRepository = RediRepository.getInstance();) {
             final Redi redi = new Redi(rediRepository);
             final Iterator<Author> authors;
             if (offset != -1 && limit != -1) {
-                authors = redi.getAuthors(offset, limit).iterator();
+                authors = redi.getAuthors(offset, limit, filterAuthorsProcessed).iterator();
             } else {
-                authors = redi.getAuthors().iterator();
+                authors = redi.getAuthors(filterAuthorsProcessed).iterator();
             }
             final List<UnescoHierarchy> dataset = UnescoDataSet.getInstance().getDataset();
 

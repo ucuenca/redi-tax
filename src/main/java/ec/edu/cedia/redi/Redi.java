@@ -54,11 +54,11 @@ public class Redi {
         this.conn = conn;
     }
 
-    public List<Author> getAuthors() throws RepositoryException {
-        return getAuthors(-1, -1);
+    public List<Author> getAuthors(boolean filterAuthorsProcessed) throws RepositoryException {
+        return getAuthors(-1, -1, filterAuthorsProcessed);
     }
 
-    public List<Author> getAuthors(int offset, int limit) throws RepositoryException {
+    public List<Author> getAuthors(int offset, int limit, boolean filterAuthorsProcessed) throws RepositoryException {
         log.info("Getting authors...");
         RepositoryConnection connection = conn.getConnection();
         List<Author> authors = new ArrayList<>();
@@ -67,14 +67,18 @@ public class Redi {
                     + "PREFIX dct: <http://purl.org/dc/terms/> \n"
                     + "SELECT DISTINCT ?a (group_concat(DISTINCT ?kw1 ; separator=\";\") as ?kws1) (group_concat(DISTINCT ?kw2 ; separator=\";\") as ?kws2)\n"
                     + "WHERE { \n"
+                    // + "values ?a {<https://redi.cedia.edu.ec/resource/authors/EPN/oai-pmh/ALFONSO_SOLAR__D>}"
                     + "  GRAPH ?redi {  \n"
                     + "    ?a a foaf:Person. \n"
                     + "    OPTIONAL { \n"
                     + "      ?a foaf:publications [dct:subject ?subject].\n"
-                    + "      ?subject rdfs:label ?kw1 .\n"
+                    + "      OPTIONAL { "
+                    + "        ?subject rdfs:label ?kw1 ."
+                    + "      }\n"
                     + "    }\n"
-                    + "    OPTIONAL { ?a foaf:topic_interest ?topic . }\n"
-                    + "    OPTIONAL { ?topic rdfs:label ?kw2. }\n"
+                    + "    OPTIONAL { ?a foaf:topic_interest ?topic . \n"
+                    + "         OPTIONAL { ?topic rdfs:label ?kw2. }"
+                    + "    }\n"
                     + "  }\n"
                     + "  GRAPH ?authors {    \n"
                     + "    ?a a foaf:Person 	\n"
@@ -91,6 +95,10 @@ public class Redi {
                 BindingSet variables = result.next();
                 URI author = (URI) variables.getBinding("a").getValue();
                 log.info("Getting subjects of author: " + author);
+                if (filterAuthorsProcessed && isAuthorInCluster(author)) {
+                    log.info("Author {} is already in clusters graph.", author);
+                    continue;
+                }
                 String keywords = "";
                 String topics = "";
                 if (variables.getBinding("kws1") != null) {
@@ -101,7 +109,7 @@ public class Redi {
                 }
                 String join = (keywords + ";" + topics).trim();
 
-                if (!join.isEmpty()) {
+                if (!join.isEmpty() && !";".equals(join)) {
                     authors.add(new Author(author, StringUtils.processTopics(join)));
                 }
             }
@@ -112,6 +120,7 @@ public class Redi {
         } finally {
             connection.close();
         }
+        log.info("Getting {} authors.", authors.size());
         return authors;
     }
 
