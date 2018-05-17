@@ -61,7 +61,7 @@ public class corticalTest {
 
         return l;
     }
-/*
+    /*
     private static void registerAuthorAreas(URI uri, List<AreaUnesco> filterAreas) {
         System.out.println("Resultado Final: " + uri);
         for (AreaUnesco a : filterAreas) {
@@ -85,10 +85,10 @@ public class corticalTest {
         Preprocessing p = Preprocessing.getInstance();
 
         RediRepository rp = RediRepository.getInstance();
-        
+
         Redi r = new Redi(rp);
         Author actual = null;
-        List<Author> authors = r.getAuthors();
+        List<Author> authors = r.getAuthors(false);
 
         Map<String, String[]> myHashMap = new HashMap<>();
         Map<String, List<AreaUnesco>> authorAreas = new HashMap<>();
@@ -320,7 +320,7 @@ public class corticalTest {
     public List<Author> getAuthors() {
         try (RediRepository r = RediRepository.getInstance()) {
             Redi redi = new Redi(r);
-            return redi.getAuthors();
+            return redi.getAuthors(false);
         } catch (Exception ex) {
         }
         return Collections.emptyList();

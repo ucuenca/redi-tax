@@ -51,7 +51,7 @@ public class RediTest {
     @Test
     @Ignore
     public void testGetAuthors() throws Exception {
-        assertTrue(!redi.getAuthors().isEmpty());
+        assertTrue(!redi.getAuthors(false).isEmpty());
     }
 
     /**
