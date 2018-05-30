@@ -21,7 +21,6 @@ import ec.edu.cedia.redi.Author;
 import ec.edu.cedia.redi.Redi;
 import ec.edu.cedia.redi.RediRepository;
 import ec.edu.cedia.redi.unesco.UnescoDataSet;
-import ec.edu.cedia.redi.unesco.UnescoNomeclature;
 import ec.edu.cedia.redi.unesco.UnescoNomeclatureConnection;
 import ec.edu.cedia.redi.unesco.model.UnescoHierarchy;
 import java.util.Iterator;
@@ -166,7 +165,6 @@ public class GenerateGroups {
             try (RediRepository rediRepository = RediRepository.getInstance();
                     UnescoNomeclatureConnection conn = UnescoNomeclatureConnection.getInstance();) {
                 Redi redi = new Redi(rediRepository);
-                UnescoNomeclature unesco = new UnescoNomeclature(conn);
 
                 KnowledgeAreas areas = new KnowledgeAreas(redi, unescoDataset);
                 areas.extractArea(author);

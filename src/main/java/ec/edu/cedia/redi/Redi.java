@@ -26,7 +26,9 @@ import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.model.impl.ValueFactoryImpl;
+import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.FOAF;
+import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.model.vocabulary.RDFS;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.BooleanQuery;
@@ -49,6 +51,7 @@ public class Redi {
     private final RediRepository conn;
     private final ValueFactory vf = ValueFactoryImpl.getInstance();
     private static final Logger log = LoggerFactory.getLogger(Redi.class);
+    private static final String UC_PREFIX = "http://ucuenca.edu.ec/ontology#";
 
     public Redi(RediRepository conn) {
         this.conn = conn;
@@ -145,16 +148,15 @@ public class Redi {
     public void store(URI author, List<AreaUnesco> areas) throws RepositoryException {
         RepositoryConnection connection = conn.getConnection();
         Model dataset = new LinkedHashModel();
-        List<URI> publications = getPublications(author);
         for (AreaUnesco area : areas) {
-            for (URI publication : publications) {
-                Statement regPub = vf.createStatement(area.getUri(), FOAF.PUBLICATIONS, publication);
-                Statement regAuthor = vf.createStatement(publication, vf.createURI("http://ucuenca.edu.ec/ontology#hasPerson"), author);
-                dataset.add(regPub);
-                dataset.add(regAuthor);
-            }
-            Statement regAreas = vf.createStatement(area.getUri(), RDFS.LABEL, vf.createLiteral(area.getLabel(), "en"));
-            dataset.add(regAreas);
+            Statement authorCluster = vf.createStatement(author, DCTERMS.IS_PART_OF, area.getUri());
+            Statement authorType = vf.createStatement(author, RDF.TYPE, FOAF.PERSON);
+            Statement clusterType = vf.createStatement(area.getUri(), RDF.TYPE, vf.createURI(UC_PREFIX, "Cluster"));
+            Statement clusterLbl = vf.createStatement(area.getUri(), RDFS.LABEL, vf.createLiteral(area.getLabel(), "en"));
+            dataset.add(authorCluster);
+            dataset.add(authorType);
+            dataset.add(clusterType);
+            dataset.add(clusterLbl);
         }
         try {
             connection.begin();
