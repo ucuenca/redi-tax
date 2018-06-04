@@ -75,12 +75,13 @@ public class KnowledgeAreas {
         }
         for (int i = 0; i < areasList.size(); i++) {
             areasList.get(i).setScore(scores[i]);
-            if (inspect) {
-                log.info("{} ({})", areasList.get(i).getLabel(), scores[i]);
-            }
         }
         List<AreaUnesco> selected = filterAreas(areasList, 2, 0.1);
         if (inspect) {
+            log.info("\n\nResults:");
+            for (AreaUnesco area : areasList) {
+                log.info("{} ({})", area.getLabel(), area.getScore());
+            }
             log.info("\n\nAreas Selected:");
             for (AreaUnesco areaUnesco : selected) {
                 log.info("{} ({})", areaUnesco.getLabel(), areaUnesco.getScore());
