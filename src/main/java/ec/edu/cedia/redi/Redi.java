@@ -61,6 +61,64 @@ public class Redi {
         return getAuthors(-1, -1, filterAuthorsProcessed);
     }
 
+    public Author getAuthor(String uri) throws RepositoryException {
+        log.info("Getting author {}...", uri);
+        RepositoryConnection connection = conn.getConnection();
+        try {
+            String query = "PREFIX foaf: <http://xmlns.com/foaf/0.1/> \n"
+                    + "PREFIX dct: <http://purl.org/dc/terms/> \n"
+                    + "SELECT DISTINCT ?a (group_concat(DISTINCT ?kw1 ; separator=\";\") as ?kws1) (group_concat(DISTINCT ?kw2 ; separator=\";\") as ?kws2)\n"
+                    + "WHERE { \n"
+                    + "values ?a {?author}"
+                    + "  GRAPH ?redi {  \n"
+                    + "    ?a a foaf:Person. \n"
+                    + "    OPTIONAL { \n"
+                    + "      ?a foaf:publications [dct:subject ?subject].\n"
+                    + "      OPTIONAL { "
+                    + "        ?subject rdfs:label ?kw1 ."
+                    + "      }\n"
+                    + "    }\n"
+                    + "    OPTIONAL { ?a foaf:topic_interest ?topic . \n"
+                    + "         OPTIONAL { ?topic rdfs:label ?kw2. }"
+                    + "    }\n"
+                    + "  }\n"
+                    + "  GRAPH ?authors {    \n"
+                    + "    ?a a foaf:Person 	\n"
+                    + "  }\n"
+                    + "} GROUP BY ?a";
+            TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
+            q.setBinding("redi", vf.createURI(RediRepository.DEFAULT_CONTEXT));
+            q.setBinding("authors", vf.createURI(RediRepository.AUTHOR_CONTEXT));
+            q.setBinding("author", vf.createURI(uri));
+            TupleQueryResult result = q.evaluate();
+            if (result.hasNext()) {
+                BindingSet variables = result.next();
+                URI author = (URI) variables.getBinding("a").getValue();
+                log.info("Getting subjects of author: " + author);
+
+                String keywords = "";
+                String topics = "";
+                if (variables.getBinding("kws1") != null) {
+                    keywords = variables.getBinding("kws1").getValue().stringValue();
+                }
+                if (variables.getBinding("kws2") != null) {
+                    topics = variables.getBinding("kws2").getValue().stringValue();
+                }
+                String join = (keywords + ";" + topics).trim();
+
+                if (!join.isEmpty() && !";".equals(join)) {
+                    return new Author(author, StringUtils.processTopics(join));
+                }
+            }
+        } catch (MalformedQueryException | QueryEvaluationException ex) {
+            log.error("Cannot execute query.", ex);
+            throw new RuntimeException(ex);
+        } finally {
+            connection.close();
+        }
+        throw new RuntimeException("Author cannot be found.");
+    }
+
     public List<Author> getAuthors(int offset, int limit, boolean filterAuthorsProcessed) throws RepositoryException {
         log.info("Getting authors...");
         RepositoryConnection connection = conn.getConnection();

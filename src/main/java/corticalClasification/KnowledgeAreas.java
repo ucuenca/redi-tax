@@ -40,6 +40,7 @@ public class KnowledgeAreas {
     private final List<UnescoHierarchy> unescoDataset;
     private final Preprocessing cortical = Preprocessing.getInstance();
     private final JSONArray comparations = new JSONArray();
+    private boolean inspect = false;
 
     private static final Logger log = LoggerFactory.getLogger(KnowledgeAreas.class);
 
@@ -49,7 +50,7 @@ public class KnowledgeAreas {
     }
 
     public void extractArea(Author author) throws RepositoryException, Exception {
-        if (redi.isAuthorInCluster(author.getURI())) {
+        if (redi.isAuthorInCluster(author.getURI()) && !inspect) {
             log.info("Author done! {}", author.getURI());
             return;
         }
@@ -63,8 +64,10 @@ public class KnowledgeAreas {
             addComparation(labels, StringUtils.stripAccents(authorKeywords));
             AreaUnesco area = new AreaUnesco(h.getLevel4(), h.getLevel4Uri());
             areasList.add(area);
-            log.info("\n\tAuthor: {}\n\tArea: {} -> {}\n\tKeywords: {}",
-                    new String[]{author.getURI().stringValue(), h.getLevel2(), h.getLevel4(), authorKeywords});
+            if (inspect) {
+                log.info("\n\tAuthor: {}\n\tArea: {} -> {}\n\tKeywords: {}",
+                        new String[]{author.getURI().stringValue(), h.getLevel2(), h.getLevel4(), authorKeywords});
+            }
         }
         double[] scores = cortical.compareTextBulk(getComparationsString(), "weightedScoring");
         if (scores.length != areasList.size()) {
@@ -72,8 +75,27 @@ public class KnowledgeAreas {
         }
         for (int i = 0; i < areasList.size(); i++) {
             areasList.get(i).setScore(scores[i]);
+            if (inspect) {
+                log.info("{} ({})", areasList.get(i).getLabel(), scores[i]);
+            }
         }
-        redi.store(author.getURI(), filterAreas(areasList, 2, 0.1));
+        List<AreaUnesco> selected = filterAreas(areasList, 2, 0.1);
+        if (inspect) {
+            log.info("\n\nAreas Selected:");
+            for (AreaUnesco areaUnesco : selected) {
+                log.info("{} ({})", areaUnesco.getLabel(), areaUnesco.getScore());
+            }
+        } else {
+            redi.store(author.getURI(), selected);
+        }
+    }
+
+    public boolean isInspect() {
+        return inspect;
+    }
+
+    public void setInspect(boolean inspect) {
+        this.inspect = inspect;
     }
 
     private List<AreaUnesco> filterAreas(List<AreaUnesco> l, int size, double porcentage) {
