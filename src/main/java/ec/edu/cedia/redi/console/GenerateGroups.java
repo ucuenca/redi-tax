@@ -58,6 +58,7 @@ public class GenerateGroups {
         CommandLine cmd;
         try {
 //            args = new String[]{"-t=4", "-o=118", "-l=100"};
+//            args = new String[]{"-t=3", "f"};
 //            args = new String[]{"-t=3"};
             cmd = parser.parse(options, args);
 

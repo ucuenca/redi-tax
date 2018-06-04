@@ -202,7 +202,7 @@ public class Redi {
     public boolean isAuthorInCluster(URI author) throws RepositoryException {
         RepositoryConnection connection = conn.getConnection();
         try {
-            String query = "ASK {GRAPH ?cluster { ?s ?p ?author }}";
+            String query = "ASK {GRAPH ?cluster { ?author ?b ?c }}";
             BooleanQuery q = connection.prepareBooleanQuery(QueryLanguage.SPARQL, query);
             q.setBinding("cluster", vf.createURI(RediRepository.CLUSTERS_CONTEXT));
             q.setBinding("author", author);
