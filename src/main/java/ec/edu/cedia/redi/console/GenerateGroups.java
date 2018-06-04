@@ -20,10 +20,13 @@ import corticalClasification.KnowledgeAreas;
 import ec.edu.cedia.redi.Author;
 import ec.edu.cedia.redi.Redi;
 import ec.edu.cedia.redi.RediRepository;
-import ec.edu.cedia.redi.unesco.UnescoNomeclature;
+import ec.edu.cedia.redi.unesco.UnescoDataSet;
 import ec.edu.cedia.redi.unesco.UnescoNomeclatureConnection;
+import ec.edu.cedia.redi.unesco.model.UnescoHierarchy;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -32,7 +35,6 @@ import org.apache.commons.cli.MissingArgumentException;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.openrdf.model.URI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +45,7 @@ import org.slf4j.LoggerFactory;
 public class GenerateGroups {
 
     private static final Logger log = LoggerFactory.getLogger(GenerateGroups.class);
+    private static int offset = -1, limit = -1;
 
     /**
      * @param args the command line arguments
@@ -54,11 +57,23 @@ public class GenerateGroups {
         final Options options = extractAreasOptions();
         CommandLine cmd;
         try {
-//            args = new String[]{""};
+//            args = new String[]{"-t=4", "-o=118", "-l=100"};
+//            args = new String[]{"-t=3"};
             cmd = parser.parse(options, args);
+
+            if ((cmd.hasOption("offset") && !cmd.hasOption("limit")) || cmd.hasOption("limit") && !cmd.hasOption("offset")) {
+                showHelp("generateGroups", options);
+                return;
+            }
+
             if (cmd.hasOption("threads")) {
                 int threads = Integer.parseInt(cmd.getOptionValue("threads").trim());
-                extractAreas(threads);
+                boolean filter = cmd.hasOption("filter-authors");
+                if (cmd.hasOption("offset") && cmd.hasOption("limit")) {
+                    offset = Integer.parseInt(cmd.getOptionValue("offset").trim());
+                    limit = Integer.parseInt(cmd.getOptionValue("limit").trim());
+                }
+                extractAreas(threads, filter);
             } else {
                 showHelp("generateGroups", options);
             }
@@ -72,7 +87,9 @@ public class GenerateGroups {
 
     private static void showHelp(String program, Options opts) {
         HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp(program, opts, true);
+        formatter.printHelp(program, "", opts,
+                "Note: in order to process a small batch use both offset and limit options.",
+                true);
     }
 
     private static Options extractAreasOptions() {
@@ -80,42 +97,82 @@ public class GenerateGroups {
                 .required(true)
                 .longOpt("threads")
                 .hasArg(true)
+                .valueSeparator('=')
                 .desc("Number of threads to execute in a single machine. \nThe execution is not thread-safe.")
+                .build();
+        final Option offsetOption = Option.builder("o")
+                .required(false)
+                .longOpt("offset")
+                .hasArg(true)
+                .valueSeparator('=')
+                .desc("Offset value to skip authors in the SPARQL query.")
+                .build();
+        final Option limitOption = Option.builder("l")
+                .required(false)
+                .longOpt("limit")
+                .hasArg(true)
+                .valueSeparator('=')
+                .desc("Limit number of authors in a the SPARQL query.")
+                .build();
+        final Option filterAuthorsOption = Option.builder("f")
+                .required(false)
+                .longOpt("filter-authors")
+                .hasArg(false)
+                .desc("Filter authors already proccessed. Default value: false.")
                 .build();
         final Options options = new Options();
         options.addOption(threadsOption);
+        options.addOption(offsetOption);
+        options.addOption(limitOption);
+        options.addOption(filterAuthorsOption);
         return options;
     }
 
-    private static void extractAreas(int threads) throws Exception {
-        try (RediRepository rediRepository = RediRepository.getInstance();
-                UnescoNomeclatureConnection conn = UnescoNomeclatureConnection.getInstance();) {
+    private static void extractAreas(int threads, boolean filterAuthorsProcessed) throws Exception {
+        try (RediRepository rediRepository = RediRepository.getInstance();) {
             final Redi redi = new Redi(rediRepository);
-            final UnescoNomeclature unesco = new UnescoNomeclature(conn);
+            final Iterator<Author> authors;
+            if (offset != -1 && limit != -1) {
+                authors = redi.getAuthors(offset, limit, filterAuthorsProcessed).iterator();
+            } else {
+                authors = redi.getAuthors(filterAuthorsProcessed).iterator();
+            }
+            final List<UnescoHierarchy> dataset = UnescoDataSet.getInstance().getDataset();
 
-            final List<URI> twoDigit = unesco.twoDigitResources();
-            final Iterator<Author> authors = redi.getAuthors().iterator();
-            KnowledgeAreas areas = new KnowledgeAreas(redi, unesco, twoDigit);
-            do {
-                for (int i = 0; i < threads; i++) {
-                    if (authors.hasNext()) {
-                        Thread thread = new Thread() {
-                            public void run() {
-                                try {
-                                    Author author = authors.next();
-                                    areas.extractArea(author);
-                                    log.info(authors.next().getURI().toString());
-                                } catch (Exception ex) {
-                                    log.error("Cannot extract area", ex);
-                                }
-                            }
-                        };
-                        thread.start();
-                    }
-                }
-
-            } while (authors.hasNext());
+            ExecutorService pool = Executors.newFixedThreadPool(threads);
+            while (authors.hasNext()) {
+                Author author = authors.next();
+                pool.execute(new AreasExtractor(author, dataset));
+            }
+            pool.shutdown();
         }
+    }
+
+    private static class AreasExtractor implements Runnable {
+
+        private Author author;
+        private List<UnescoHierarchy> unescoDataset;
+
+        public AreasExtractor(Author author, List<UnescoHierarchy> unescoDataset) {
+            this.author = author;
+            this.unescoDataset = unescoDataset;
+        }
+
+        @Override
+        public void run() {
+            log.info("Executing author {} in thread {}",
+                    new String[]{author.getURI().stringValue()}, Thread.currentThread().getName());
+            try (RediRepository rediRepository = RediRepository.getInstance();
+                    UnescoNomeclatureConnection conn = UnescoNomeclatureConnection.getInstance();) {
+                Redi redi = new Redi(rediRepository);
+
+                KnowledgeAreas areas = new KnowledgeAreas(redi, unescoDataset);
+                areas.extractArea(author);
+            } catch (Exception ex) {
+                log.error("Cannot extract area", ex);
+            }
+        }
+
     }
 
 }

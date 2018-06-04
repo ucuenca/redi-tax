@@ -50,6 +50,9 @@ public class SubClassificationCortical {
             DbpediaRepository drep = DbpediaRepository.getInstance();
             Dbpedia db = new Dbpedia(drep);
             Preprocessing p = Preprocessing.getInstance();
+            System.out.printf("Test dbpedia");
+            System.out.print(db.DirectCategory("http://dbpedia.org/resource/Typhoon_Vicente"));
+            
            Object v = p.CompareText(StringUtils.stripAccents("Computer Sciences"), StringUtils.stripAccents("Computer Sciences"), "weightedScoring");
             System.out.print(v);
             System.out.print ("TEST TYPE");
@@ -73,7 +76,7 @@ public class SubClassificationCortical {
             List <String> clusters = r.getclustersAvailable ();
             for (String cl:clusters) {
                  System.out.println("Cluster: " + cl);  
-        
+            if (!r.askSubCluster(cl)){
             List <String> total = new ArrayList () ;
            // List<Author> authors = r.getAuthorsbyCluster("http://skos.um.es/unesco6/1203");
              List<Author> authors = r.getAuthorsbyCluster(cl);
@@ -104,9 +107,12 @@ public class SubClassificationCortical {
                  num = topk.size();
             } 
                System.out.print ("Dbpedia Entities");
-               Map<String,String> entities = (Map<String,String>) p.detectDbpediaEntitiestoArray(String.join(", ", topk.subList(0,num)) );
+               Object objdbpedia =  p.detectDbpediaEntitiestoArray(String.join(", ", topk.subList(0,num)) );
+               if (objdbpedia != null) {
+               Map<String,String> entities = (Map<String,String>) objdbpedia;
                System.out.print (entities);
               // Map <String,String> valid = new HashMap ();
+               if (!entities.isEmpty()){
                List <String> valid = new ArrayList ();
                List <NodoDbpedia> nd = new ArrayList ();
                for ( Map.Entry<String, String> mdp: entities.entrySet()){
@@ -140,8 +146,14 @@ public class SubClassificationCortical {
                  
                }
                
-               subClusterAuthor (authors , nd , cl);
-             
+               subClusterAuthor (authors , nd , cl , r);
+               }
+               }else {
+                System.out.println ("Cant be found cluster"+cl);
+               }
+            }else {
+             System.out.println (cl+"  already proccess ");
+            }
             /*
                  System.out.println ("Related K");
                  List <String> Relatedk = getrelatedkey (topk.subList(0,num) , "Computer Sciences" , 1.0);             
@@ -172,6 +184,9 @@ public class SubClassificationCortical {
           //  System.out.println (r.toString());
              //System.out.println (a.getKeywords());
              String prek = a.getKeywords().replaceAll("[\"-\']", "").trim();
+             if (prek.length() > 3000){
+             prek=prek.substring(0,3000);
+             }
             List<String>  kt = Arrays.asList(p.traductor(prek).toString().replace("[\"", "").replace("\"]", "").replace("context,", "").toLowerCase().split(";"));
             kt = kt.stream().map(s -> s.trim()).filter(s -> s.length()> 0).collect(Collectors.toList());
             List <String> ktnd = deleteDuplicate (kt);
@@ -200,6 +215,7 @@ public class SubClassificationCortical {
         Map <String, Integer> mp = new HashMap <> ();
         list.stream().forEach((l) -> {
             if ( mp.containsKey(l.trim())) {
+               
                 mp.put(l.trim(), ((Integer) mp.get(l))+1);
             }else {
                 mp.put(l.trim(), 0);
@@ -227,11 +243,17 @@ public class SubClassificationCortical {
         // sorting HashMap by values using comparator
         Collections.sort(listOfEntries, valueComparator);
         List<String> auxlist = new ArrayList();
+        int count = 0;
         for (Map.Entry<String, Integer> e : listOfEntries) {
             System.out.println (e.getKey()+"-"+e.getValue());
-           if ( e.getValue()>=min ){
+          /*  if (count == 0 && e.getValue() < 1){
+                min = 0;
+            }*/
+           
+           if ( e.getValue()>=min || count < 5 ){
             auxlist.add(e.getKey());
            }
+           count++;
         }
         return auxlist;
     }
@@ -271,7 +293,7 @@ public class SubClassificationCortical {
       //  throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
-    private static void subClusterAuthor ( List <Author> authors , List <NodoDbpedia> nodo , String cluster) {
+    private static void subClusterAuthor ( List <Author> authors , List <NodoDbpedia> nodo , String cluster , Redi r) {
          for (Author a :authors){
             String [] kauthor = a.getKeywords().split(",");
              System.out.println ("Author "+a.getURI()+"---");
@@ -292,7 +314,8 @@ public class SubClassificationCortical {
                     }
                  }
             }
-            saveSubclusterGraph (a , finalclusters ,cluster);
+            r.storeSubcluster(a, finalclusters, cluster);
+            //saveSubclusterGraph (a , finalclusters ,cluster);
         }
     }
     
@@ -388,8 +411,9 @@ public class SubClassificationCortical {
         try {
              NodoDbpedia newnode = new NodoDbpedia (value);
              newnode.setOrigin(ori);
-             newnode.setAcademic( db.isAcademicDbpedia (value));
              System.out.println ("|||||||"+ori +" "+value +"|||||||");
+             newnode.setAcademic( db.isAcademicDbpedia (value));
+             
              if( newnode.getAcademic() != null && !newnode.getAcademic().isEmpty() ){
                  System.out.println ("FIRST");
                 

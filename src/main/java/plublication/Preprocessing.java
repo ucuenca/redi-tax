@@ -54,6 +54,7 @@ import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sparql.SPARQLRepository;
 import org.openrdf.rio.ParserConfig;
+import org.slf4j.LoggerFactory;
 import tinkerpop.GraphOperations;
 
 /**
@@ -66,7 +67,7 @@ public class Preprocessing {
 
     private final ValueFactory vf = ValueFactoryImpl.getInstance();
     private final static String DEFAULT_CONTEXT = "http://dbpedia.org/sparql";
-    // private Logger log = Logger.getLogger(Writer.class.getName());
+    private org.slf4j.Logger log = LoggerFactory.getLogger(Preprocessing.class);
     private static Preprocessing instanceService = new Preprocessing();
     private HttpClient httpClient = HttpClients.createDefault();
 
@@ -111,15 +112,15 @@ public class Preprocessing {
 
         return executeService(post, null, null);
     }
-    
-    
+
+        
         public Object CompareText(String text1, String text2 , String metric) throws  IOException {
 
         HttpPost post = new HttpPost("http://api.cortical.io/rest/compare?retina_name=en_associative");
 
         int timeoutSeconds = 10;
         int CONNECTION_TIMEOUT_MS = timeoutSeconds * 1000; // Timeout in millis.
-      RequestConfig requestConfig = RequestConfig.custom()
+        RequestConfig requestConfig = RequestConfig.custom()
         .setConnectionRequestTimeout(CONNECTION_TIMEOUT_MS)
         .setConnectTimeout(CONNECTION_TIMEOUT_MS)
         .setSocketTimeout(CONNECTION_TIMEOUT_MS)
@@ -139,23 +140,42 @@ public class Preprocessing {
        // "{ \"text\": \"Gustav Klimt was born in Baumgarten, near Vienna in Austria-Hungary, the second of seven children\"}]}");
         System.out.println(jsonArr.toJSONString());
         StringEntity textEntity = new StringEntity( jsonArr.toJSONString() , Charset.defaultCharset());
+
         post.setEntity(textEntity);
-      //  post.addHeader("api-key", "1c556a80-8595-11e6-a057-97f4c970893c");
+        //  post.addHeader("api-key", "1c556a80-8595-11e6-a057-97f4c970893c");
         post.addHeader("Content-Type", "application/json");
         post.addHeader("Cache-Control", "no-cache");
         post.addHeader("Accept", "application/json");
-         post.addHeader("Accept-Encoding", "gzip, deflate");
-         post.setConfig(requestConfig);
-        	
+        post.addHeader("Accept-Encoding", "gzip, deflate");
+        post.setConfig(requestConfig);
 
-
-        return executeServicePath(post, "$."+metric);
+        return executeServicePath(post, "$." + metric);
     }
 
-    public Object executeService(HttpUriRequest request, @Nullable String key, @Nullable String Secondkey) throws IOException {
+    public double[] compareTextBulk(String bulk, String metric) {
+
+
+        HttpPost post = new HttpPost("http://api.cortical.io/rest/compare/bulk?retina_name=en_associative");
+
+        StringEntity textEntity = new StringEntity(bulk, Charset.defaultCharset());
+        post.setEntity(textEntity);
+        post.addHeader("Content-Type", "application/json");
+        post.addHeader("Cache-Control", "no-cache");
+        post.addHeader("Accept", "application/json");
+        post.addHeader("Accept-Encoding", "gzip, deflate");
+
+        JSONArray result = (JSONArray) executeServicePath(post, "$.[*]." + metric);
+        double[] scores = new double[result.size()];
+        for (int i = 0; i < result.size(); i++) {
+            double score = Double.parseDouble(String.valueOf(result.get(i)));
+            scores[i] = score;
+        }
+        return scores;
+    }
+
+      public Object executeService(HttpUriRequest request, @Nullable String key, @Nullable String Secondkey) {
         while (true) {
-                
-          
+            try {
                 HttpResponse response = httpClient.execute(request);
                 HttpEntity entity = response.getEntity();
 
@@ -186,18 +206,23 @@ public class Preprocessing {
                         } else if (parser instanceof JsonArray) {
                             return ((JsonArray) parser).toString();
                         } else {
-                            return null;
+                            return "";
                         }
+                    } catch (IOException ex) {
+                        log.error("Problems reading response", ex);
                     }
                 } else {
                     System.out.print(response);
-                    return null;
                 }
-        
+            } catch (UnknownHostException e) {
+                log.error("Can't reach host in service: Detect Language", e);
+            } catch (IOException ex) {
+                log.error("Cannot make request", ex);
+            }
         }
-    }
+}
 
-    public Object executeServicePath(HttpUriRequest request, @Nullable String path) throws IOException {
+    public Object executeServicePath(HttpUriRequest request, @Nullable String path) {
         while (true) {
             try {
                 HttpResponse response = httpClient.execute(request);
@@ -215,14 +240,15 @@ public class Preprocessing {
                       return null;
                     }
                 } else {
-                    System.out.print(response);
-                    return null;
-                    //System.out.print(response);
+                    log.error(response.toString());
+                     System.out.print ("Trying again");
+                    //return null;
                 }
-            } catch (Exception e) {
-                System.out.printf(e + "Can't reach host. triying again");
+            } catch (UnknownHostException e) {
+                log.error("Can't reach host in service: Detect Language", e);
                 httpClient = HttpClients.createDefault();
-                // log.log(Priority.WARN, "Can"Can't reach host in service: Detect Language"reach host in service: Detect Language");
+            } catch (IOException ex) {
+                log.error("Cannot make request", ex);
             }
         }
     }
@@ -252,9 +278,12 @@ public class Preprocessing {
 
         try {
 
-            URIBuilder builder = new URIBuilder("https://translate.yandex.net/api/v1.5/tr.json/translate").addParameters(list);
+            URIBuilder builder = new URIBuilder("https://translate.yandex.net/api/v1.5/tr.json/translate");
+                  //  .addParameters(list);
             //  System.out.print("URI"+builder.build());
-            HttpGet request = new HttpGet(builder.build());
+            HttpPost request = new HttpPost(builder.build());
+            request.setEntity(new UrlEncodedFormEntity(list, HTTP.UTF_8));
+           // request.s
             // return executeService (request , "text" , null);
             return executeServicePath(request, "$.text[*]");
         } catch (URISyntaxException ex) {
@@ -322,6 +351,7 @@ public class Preprocessing {
      public  Map <String,String> JsonToArray (Object obj) {
            System.out.println ("sdasd");
            System.out.print (obj);
+           if (obj != null){
           JsonElement jelement = new JsonParser().parse(obj.toString());
          // JsonObject  jobject = jelement.getAsJsonObject();
           
@@ -336,7 +366,9 @@ public class Preprocessing {
         /*  jobject = jarray.get(0).getAsJsonObject();
           String result = jobject.get("translatedText").getAsString();*/
     return mp;
-         
+           }
+           
+           return null;
     
      }
 

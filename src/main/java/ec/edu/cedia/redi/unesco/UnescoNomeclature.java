@@ -235,7 +235,7 @@ public class UnescoNomeclature {
         } catch (MalformedQueryException | QueryEvaluationException ex) {
             log.error("Cannot process query.", ex);
         } catch (RepositoryException ex) {
-            log.error("Repository Exception.", ex);
+                log.error("Repository Exception.", ex);
         }
         return null;
     }

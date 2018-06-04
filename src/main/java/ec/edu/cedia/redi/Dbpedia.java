@@ -71,7 +71,7 @@ public class Dbpedia {
             String query = "select  distinct ?response where {\n"
                     + "?entity a ?t .\n"
                     + "BIND(EXISTS{ ?entity  a ?t  } AS ?response) .\n"
-                    + "filter ( ?t = dbo:Place || ?t = dbo:Person  )\n"
+                    + "filter ( ?t = dbo:Place || ?t = dbo:Person  || ?t = geo:SpatialThing )\n"
                     + "}";
             // String query = "Select * where {?a a dbo:Place } limit 10";
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
@@ -126,8 +126,12 @@ public class Dbpedia {
                 BindingSet variables = result.next();
                 if (variables.hasBinding("leng") || variables.hasBinding("les")) {
                     NodoDbpedia academic = new NodoDbpedia(ent);
+                    if (variables.hasBinding("leng")) {
                     academic.setNameEn(variables.getValue("leng").stringValue());
+                    }
+                    if (variables.hasBinding("lesp")) {
                     academic.setNameEs(variables.getValue("lesp").stringValue());
+                    }
                     laca.add(academic);
                     // dbn.getAcademic().add(academic);
 
@@ -244,8 +248,12 @@ public class Dbpedia {
                 BindingSet variables = result.next();
                 if (variables.hasBinding("leng") || variables.hasBinding("les")) {
                     NodoDbpedia academic = new NodoDbpedia(ent);
+                    if (variables.hasBinding("leng")){
                     academic.setNameEn(variables.getValue("leng").stringValue());
+                    }
+                    if (variables.hasBinding("lesp")){
                     academic.setNameEs(variables.getValue("lesp").stringValue());
+                    }
                     laca.add(academic);
                     // dbn.getAcademic().add(academic);
 

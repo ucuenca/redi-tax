@@ -17,9 +17,11 @@
 package ec.edu.cedia.redi;
 
 import corticalClasification.AreaUnesco;
+import ec.edu.cedia.redi.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import org.openrdf.model.Model;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
@@ -51,32 +53,70 @@ public class Redi {
     private final RediRepository conn;
     private final ValueFactory vf = ValueFactoryImpl.getInstance();
     private static final Logger log = LoggerFactory.getLogger(Redi.class);
+    private static final String UC_PREFIX = "http://ucuenca.edu.ec/ontology#";
 
     public Redi(RediRepository conn) {
         this.conn = conn;
     }
 
-    public List<Author> getAuthors() throws RepositoryException {
+    public List<Author> getAuthors(boolean filterAuthorsProcessed) throws RepositoryException {
+        return getAuthors(-1, -1, filterAuthorsProcessed);
+    }
+
+    public List<Author> getAuthors(int offset, int limit, boolean filterAuthorsProcessed) throws RepositoryException {
+        log.info("Getting authors...");
         RepositoryConnection connection = conn.getConnection();
         List<Author> authors = new ArrayList<>();
         try {
-            String query = "PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
-                    + "PREFIX dct: <http://purl.org/dc/terms/> "
-                    + "SELECT ?a (group_concat(DISTINCT ?kw ; separator=\";\") as ?kws) "
-                    + "WHERE { GRAPH ?graph {"
-                    + "  ?a a foaf:Person;"
-                    + "    foaf:publications ?p."
-                    + "  ?p dct:subject [rdfs:label ?kw] ."
-                    + " GRAPH ?author{ "
-                    + "   ?a a foaf:Person }"
-                    + "}} GROUP BY ?a offset 1500 limit 100";
+            String query = "PREFIX foaf: <http://xmlns.com/foaf/0.1/> \n"
+                    + "PREFIX dct: <http://purl.org/dc/terms/> \n"
+                    + "SELECT DISTINCT ?a (group_concat(DISTINCT ?kw1 ; separator=\";\") as ?kws1) (group_concat(DISTINCT ?kw2 ; separator=\";\") as ?kws2)\n"
+                    + "WHERE { \n"
+                    // + "values ?a {<https://redi.cedia.edu.ec/resource/authors/EPN/oai-pmh/ALFONSO_SOLAR__D>}"
+                    + "  GRAPH ?redi {  \n"
+                    + "    ?a a foaf:Person. \n"
+                    + "    OPTIONAL { \n"
+                    + "      ?a foaf:publications [dct:subject ?subject].\n"
+                    + "      OPTIONAL { "
+                    + "        ?subject rdfs:label ?kw1 ."
+                    + "      }\n"
+                    + "    }\n"
+                    + "    OPTIONAL { ?a foaf:topic_interest ?topic . \n"
+                    + "         OPTIONAL { ?topic rdfs:label ?kw2. }"
+                    + "    }\n"
+                    + "  }\n"
+                    + "  GRAPH ?authors {    \n"
+                    + "    ?a a foaf:Person 	\n"
+                    + "  }\n"
+                    + "} GROUP BY ?a";
+            if (offset != -1 && limit != -1) {
+                query += String.format("\nOFFSET %s LIMIT %s ", offset, limit);
+            }
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
-            q.setBinding("graph", vf.createURI(RediRepository.DEFAULT_CONTEXT));
-            q.setBinding("author", vf.createURI(RediRepository.AUTHOR_CONTEXT));
+            q.setBinding("redi", vf.createURI(RediRepository.DEFAULT_CONTEXT));
+            q.setBinding("authors", vf.createURI(RediRepository.AUTHOR_CONTEXT));
             TupleQueryResult result = q.evaluate();
             while (result.hasNext()) {
                 BindingSet variables = result.next();
-                authors.add(new Author((URI) variables.getBinding("a").getValue(), variables.getBinding("kws").getValue().stringValue()));
+                URI author = (URI) variables.getBinding("a").getValue();
+                log.info("Getting subjects of author: " + author);
+                if (filterAuthorsProcessed && isAuthorInCluster(author)) {
+                    log.info("Author {} is already in clusters graph.", author);
+                    continue;
+                }
+                String keywords = "";
+                String topics = "";
+                if (variables.getBinding("kws1") != null) {
+                    keywords = variables.getBinding("kws1").getValue().stringValue();
+                }
+                if (variables.getBinding("kws2") != null) {
+                    topics = variables.getBinding("kws2").getValue().stringValue();
+                }
+                String join = (keywords + ";" + topics).trim();
+
+                if (!join.isEmpty() && !";".equals(join)) {
+                    authors.add(new Author(author, StringUtils.processTopics(join)));
+                }
             }
         } catch (MalformedQueryException ex) {
             log.error("Cannot execute query.", ex);
@@ -85,6 +125,7 @@ public class Redi {
         } finally {
             connection.close();
         }
+        log.info("Getting {} authors.", authors.size());
         return authors;
     }
 
@@ -93,23 +134,19 @@ public class Redi {
         List<Author> authors = new ArrayList<>();
         try {
             String query = "PREFIX dct: <http://purl.org/dc/terms/>\n"
-                    + "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n"
-                    + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
-                    + "select distinct ?cname  ?author   (group_concat(DISTINCT ?s ; separator=\";\") as ?kws)  \n"
-                    + "{\n"
-                    + "  GRAPH ?graphCl {\n"
-                    + "     ?cl rdfs:label ?cname .\n"
-                    + "     ?cl foaf:publications ?pub \n "
-                 //   + ".  filter ( ?pub != <https://redi.cedia.edu.ec/resource/publication/cd34a0fa47da479eb059a538f95c0b77>)"
-                    + "  }\n"
-                    + "     ?pub  <http://ucuenca.edu.ec/ontology#hasPerson>  ?author .\n"
-                    + "    GRAPH ?graphRedi {\n"
-                    + "      select ?pub ?s {\n"
-                    + "        ?pub dct:subject [rdfs:label ?s] ."
-                    + "        ?pub dct:title ?t ."
-                    + "    } \n"
-                    + "    }\n"
-                    + "} GROUP BY ?cname ?author ";
+                    + "     PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n"
+                    + "     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> \n"
+                    + " select distinct ?cname  ?author    (group_concat(DISTINCT ?s ; separator=\";\") as ?kws)  \n"
+                    + "                       { \n"
+                    + "                         GRAPH ?graphCl { \n"
+                    + "                          ?cl rdfs:label ?cname . \n"
+                    + "                          ?author dct:isPartOf ?cl .\n"
+                    + "                          GRAPH ?graphRedi {\n"
+                    + "                            select ?pub ?s {\n"
+                    + "                            ?author foaf:publications ?pub .\n"
+                    + "                            ?pub dct:subject [rdfs:label ?s]  \n"
+                    + "                       }   }\n"
+                    + "                    } } GROUP BY ?cname ?author";
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
             q.setBinding("graphRedi", vf.createURI(RediRepository.DEFAULT_CONTEXT));
             q.setBinding("graphCl", vf.createURI(RediRepository.CLUSTERS_CONTEXT));
@@ -133,14 +170,16 @@ public class Redi {
         RepositoryConnection connection = conn.getConnection();
         List<String> cluster = new ArrayList<>();
         try {
-            String query = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
-                    + "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n"
-                    + "SELECT distinct ?cl ?clabel  WHERE {\n"
-                    + " GRAPH ?graphCl {\n"
-                    + "   ?cl foaf:publications ?pub . \n"
-                    + "   ?cl rdfs:label ?clabel\n"
-                    + " }\n"
-                    + "} ";
+            String query = "PREFIX dct: <http://purl.org/dc/terms/>\n"
+                    + "SELECT Distinct ?cl WHERE {\n"
+                    + "   GRAPH ?graphCl  {  \n"
+                    + "   ?cl a ?v .\n"
+                    + "   ?author dct:isPartOf ?cl .  \n"
+                    + "   filter ( STR(?v) = \"http://ucuenca.edu.ec/ontology#Cluster\")  \n"
+                    + "     \n"
+                    + "   }\n"
+                    + "}";
+
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
             q.setBinding("graphCl", vf.createURI(RediRepository.CLUSTERS_CONTEXT));
             TupleQueryResult result = q.evaluate();
@@ -181,16 +220,15 @@ public class Redi {
     public void store(URI author, List<AreaUnesco> areas) throws RepositoryException {
         RepositoryConnection connection = conn.getConnection();
         Model dataset = new LinkedHashModel();
-        List<URI> publications = getPublications(author);
         for (AreaUnesco area : areas) {
-            for (URI publication : publications) {
-                Statement regPub = vf.createStatement(area.getUri(), FOAF.PUBLICATIONS, publication);
-                Statement regAuthor = vf.createStatement(publication, vf.createURI("http://ucuenca.edu.ec/ontology#hasPerson"), author);
-                dataset.add(regPub);
-                dataset.add(regAuthor);
-            }
-            Statement regAreas = vf.createStatement(area.getUri(), RDFS.LABEL, vf.createLiteral(area.getLabel(), "en"));
-            dataset.add(regAreas);
+            Statement authorCluster = vf.createStatement(author, DCTERMS.IS_PART_OF, area.getUri());
+            Statement authorType = vf.createStatement(author, RDF.TYPE, FOAF.PERSON);
+            Statement clusterType = vf.createStatement(area.getUri(), RDF.TYPE, vf.createURI(UC_PREFIX, "Cluster"));
+            Statement clusterLbl = vf.createStatement(area.getUri(), RDFS.LABEL, vf.createLiteral(area.getLabel(), "en"));
+            dataset.add(authorCluster);
+            dataset.add(authorType);
+            dataset.add(clusterType);
+            dataset.add(clusterLbl);
         }
         try {
             connection.begin();
@@ -233,40 +271,79 @@ public class Redi {
         }
         return publications;
     }
-    
-    
-     public void storeSubcluster( Author author,  Map <String,NodoDbpedia> nodos, String cluster) throws RepositoryException {
-        RepositoryConnection connection = conn.getConnection();
-        Model dataset = new LinkedHashModel();
-        //List<URI> publications = getPublications(author);
-        for ( Map.Entry<String, NodoDbpedia> nb : nodos.entrySet()) {
-         
-         Statement SubClClass= vf.createStatement(vf.createURI(nb.getKey()) , RDF.TYPE, vf.createURI("http://ucuenca.edu.ec/ontology#SubCluster"));
-         dataset.add(SubClClass);
-         
-         Statement authorSubC = vf.createStatement(author.getURI(), DCTERMS.IS_PART_OF, vf.createURI(nb.getKey()));
-         dataset.add(authorSubC);
-         
-         Statement ClustSubC = vf.createStatement(vf.createURI(nb.getKey()) , DCTERMS.IS_PART_OF, vf.createURI(cluster));
-         dataset.add(ClustSubC);        
-// Statement SubClNameEn = vf.createStatement(vf.createURI(nb.getKey()) , RDFS.LABEL, vf.createURI(cluster));
-         Statement SubClNameEn= vf.createStatement(vf.createURI(nb.getKey()) , RDFS.LABEL , vf.createURI(nb.getValue().getNameEn(),"en"));
-         dataset.add(SubClNameEn);
-         
-         if (nb.getValue().getNameEs() != null){
-         Statement SubClNameEs= vf.createStatement(vf.createURI(nb.getKey()) , RDFS.LABEL, vf.createURI(nb.getValue().getNameEs(),"es"));
-         dataset.add(SubClNameEs);
-         }
-        }
+
+    public void storeSubcluster(Author author, Map<String, NodoDbpedia> nodos, String cluster) {
         try {
-            connection.begin();
-            connection.add(dataset, vf.createURI(RediRepository.CLUSTERS_CONTEXT));
+            RepositoryConnection connection = conn.getConnection();
+            Model dataset = new LinkedHashModel();
+            //List<URI> publications = getPublications(author);
+            for (Map.Entry<String, NodoDbpedia> nb : nodos.entrySet()) {
+
+                Statement SubClClass = vf.createStatement(vf.createURI(nb.getKey()), RDF.TYPE, vf.createURI("http://ucuenca.edu.ec/ontology#SubCluster"));
+                dataset.add(SubClClass);
+
+                Statement authorSubC = vf.createStatement(author.getURI(), DCTERMS.IS_PART_OF, vf.createURI(nb.getKey()));
+                dataset.add(authorSubC);
+
+                Statement ClustSubC = vf.createStatement(vf.createURI(nb.getKey()), DCTERMS.IS_PART_OF, vf.createURI(cluster));
+                dataset.add(ClustSubC);
+// Statement SubClNameEn = vf.createStatement(vf.createURI(nb.getKey()) , RDFS.LABEL, vf.createURI(cluster));
+                if (nb.getValue().getNameEs() != null) {
+                    Statement SubClNameEn = vf.createStatement(vf.createURI(nb.getKey()), RDFS.LABEL, vf.createLiteral(nb.getValue().getNameEn(), "en"));
+                    dataset.add(SubClNameEn);
+                }
+
+                if (nb.getValue().getNameEs() != null) {
+                    Statement SubClNameEs = vf.createStatement(vf.createURI(nb.getKey()), RDFS.LABEL, vf.createLiteral(nb.getValue().getNameEs(), "es"));
+                    dataset.add(SubClNameEs);
+                }
+            }
+            try {
+                connection.begin();
+                connection.add(dataset, vf.createURI(RediRepository.CLUSTERS_CONTEXT));
+            } catch (RepositoryException ex) {
+                log.error("", ex);
+            } finally {
+                connection.commit();
+                connection.close();
+                //log.info("Stored author {} with areas {}", author, areas);
+            }
         } catch (RepositoryException ex) {
-            log.error("", ex);
-        } finally {
-            connection.commit();
-            connection.close();
-            //log.info("Stored author {} with areas {}", author, areas);
+            java.util.logging.Logger.getLogger(Redi.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    public Boolean askSubCluster(String cl) {
+        try {
+            RepositoryConnection connection = conn.getConnection();
+            
+            String query = "PREFIX dct: <http://purl.org/dc/terms/>\n"
+                    + "SELECT  (COUNT(?scl) as ?c)    WHERE {\n"
+                    + "   GRAPH  ?graphCl { ?scl a <http://ucuenca.edu.ec/ontology#SubCluster>  .\n"
+                    + "   ?scl dct:isPartOf ?cl .\n"
+                    + "} }";
+            
+            TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);      
+            q.setBinding("cl", vf.createURI(cl));
+            q.setBinding("graphCl", vf.createURI(RediRepository.CLUSTERS_CONTEXT));
+            TupleQueryResult result = q.evaluate();
+            while (result.hasNext()) {
+               BindingSet res = result.next();
+                if (res.hasBinding("c")){
+                int count = Integer.parseInt(res.getValue("c").stringValue());
+                if (count > 1 ) { return true;}
+                }
+                return false;
+                
+              //  publications.add(publication);
+            }
+            
+            
+            return false;
+        } catch (RepositoryException | MalformedQueryException | QueryEvaluationException ex) {
+            java.util.logging.Logger.getLogger(Redi.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+
     }
 }
