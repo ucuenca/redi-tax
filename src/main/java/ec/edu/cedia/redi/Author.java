@@ -24,8 +24,8 @@ import org.openrdf.model.URI;
  */
 public class Author {
 
-    private final URI uri;
-    private final String keywords;
+    private  URI uri;
+    private  String keywords;
 
     public Author(URI author, String keywords) {
         this.uri = author;
@@ -38,6 +38,14 @@ public class Author {
 
     public String getKeywords() {
         return keywords;
+    }
+
+    public void setUri(URI uri) {
+        this.uri = uri;
+    }
+
+    public void setKeywords(String keywords) {
+        this.keywords = keywords;
     }
 
 }

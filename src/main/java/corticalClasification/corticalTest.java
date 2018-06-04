@@ -43,7 +43,8 @@ public class corticalTest {
     private static List<AreaUnesco> filterAreas(List<AreaUnesco> l, int n, double porcentage) {
 
         Collections.sort(l, new AreaUnesco().reversed());
-
+        System.out.println ("List");
+        System.out.println (l);
         if (n >= l.size()) {
             return l;
         }

@@ -31,6 +31,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -112,35 +113,47 @@ public class Preprocessing {
         return executeService(post, null, null);
     }
 
-    public Object CompareText(String text1, String text2, String metric) {
+        
+        public Object CompareText(String text1, String text2 , String metric) throws  IOException {
 
         HttpPost post = new HttpPost("http://api.cortical.io/rest/compare?retina_name=en_associative");
 
-        JSONObject json1 = new JSONObject();
-        json1.put("text", text1);
+        int timeoutSeconds = 10;
+        int CONNECTION_TIMEOUT_MS = timeoutSeconds * 1000; // Timeout in millis.
+        RequestConfig requestConfig = RequestConfig.custom()
+        .setConnectionRequestTimeout(CONNECTION_TIMEOUT_MS)
+        .setConnectTimeout(CONNECTION_TIMEOUT_MS)
+        .setSocketTimeout(CONNECTION_TIMEOUT_MS)
+        .build(); 
+        
+       JSONObject json1 = new JSONObject();
+       json1.put("text", text1);
+               
+       JSONObject json2 = new JSONObject();
+       json2.put("text", text2);
+             
+        JSONArray jsonArr = new JSONArray (); 
+        jsonArr.add( json1);
+        jsonArr.add( json2);
+     
+       // StringEntity textEntity = new StringEntity(" { \"elements\" : [{ \"term\": \"Pablo Picasso\"  }, " +
+       // "{ \"text\": \"Gustav Klimt was born in Baumgarten, near Vienna in Austria-Hungary, the second of seven children\"}]}");
+        System.out.println(jsonArr.toJSONString());
+        StringEntity textEntity = new StringEntity( jsonArr.toJSONString() , Charset.defaultCharset());
 
-        JSONObject json2 = new JSONObject();
-        json2.put("text", text2);
-
-        JSONArray jsonArr = new JSONArray();
-        jsonArr.add(json1);
-        jsonArr.add(json2);
-
-        // StringEntity textEntity = new StringEntity(" { \"elements\" : [{ \"term\": \"Pablo Picasso\"  }, " +
-        // "{ \"text\": \"Gustav Klimt was born in Baumgarten, near Vienna in Austria-Hungary, the second of seven children\"}]}");
-//        System.out.println(jsonArr.toJSONString());
-        StringEntity textEntity = new StringEntity(jsonArr.toJSONString(), Charset.defaultCharset());
         post.setEntity(textEntity);
         //  post.addHeader("api-key", "1c556a80-8595-11e6-a057-97f4c970893c");
         post.addHeader("Content-Type", "application/json");
         post.addHeader("Cache-Control", "no-cache");
         post.addHeader("Accept", "application/json");
         post.addHeader("Accept-Encoding", "gzip, deflate");
+        post.setConfig(requestConfig);
 
         return executeServicePath(post, "$." + metric);
     }
 
     public double[] compareTextBulk(String bulk, String metric) {
+
 
         HttpPost post = new HttpPost("http://api.cortical.io/rest/compare/bulk?retina_name=en_associative");
 
@@ -160,7 +173,7 @@ public class Preprocessing {
         return scores;
     }
 
-    public Object executeService(HttpUriRequest request, @Nullable String key, @Nullable String Secondkey) {
+      public Object executeService(HttpUriRequest request, @Nullable String key, @Nullable String Secondkey) {
         while (true) {
             try {
                 HttpResponse response = httpClient.execute(request);
@@ -207,7 +220,7 @@ public class Preprocessing {
                 log.error("Cannot make request", ex);
             }
         }
-    }
+}
 
     public Object executeServicePath(HttpUriRequest request, @Nullable String path) {
         while (true) {
@@ -221,12 +234,19 @@ public class Preprocessing {
                         // Object parserresponse = new JsonParser().parse(jsonResult);
 
                         return JsonPath.read(jsonResult, path);
+                    }catch (Exception e)
+                    {
+                      System.out.print ("Error Path"+e);
+                      return null;
                     }
                 } else {
                     log.error(response.toString());
+                     System.out.print ("Trying again");
+                    //return null;
                 }
             } catch (UnknownHostException e) {
                 log.error("Can't reach host in service: Detect Language", e);
+                httpClient = HttpClients.createDefault();
             } catch (IOException ex) {
                 log.error("Cannot make request", ex);
             }
@@ -246,7 +266,7 @@ public class Preprocessing {
 
         List<NameValuePair> list = new ArrayList();
 
-//        NameValuePair nv1 = new BasicNameValuePair("key", "trnsl.1.1.20180515T220323Z.a01167a60fd15c32.e1f33475375f91802f0e1da270a94bd99b412521");
+       // NameValuePair nv1 = new BasicNameValuePair("key", "trnsl.1.1.20180515T220323Z.a01167a60fd15c32.e1f33475375f91802f0e1da270a94bd99b412521");
         NameValuePair nv1 = new BasicNameValuePair("key", "trnsl.1.1.20160321T160516Z.43cfb95e23a69315.6c0a2ae19f56388c134615f4740fbb1d400f15d3");
         list.add(nv1);
         NameValuePair nv2 = new BasicNameValuePair("lang", "es-en");
@@ -258,11 +278,14 @@ public class Preprocessing {
 
         try {
 
-            URIBuilder builder = new URIBuilder("https://translate.yandex.net/api/v1.5/tr.json/translate").addParameters(list);
+            URIBuilder builder = new URIBuilder("https://translate.yandex.net/api/v1.5/tr.json/translate");
+                  //  .addParameters(list);
             //  System.out.print("URI"+builder.build());
-            HttpGet request = new HttpGet(builder.build());
+            HttpPost request = new HttpPost(builder.build());
+            request.setEntity(new UrlEncodedFormEntity(list, HTTP.UTF_8));
+           // request.s
             // return executeService (request , "text" , null);
-            return executeServicePath(request, "$.text");
+            return executeServicePath(request, "$.text[*]");
         } catch (URISyntaxException ex) {
             Logger.getLogger(Preprocessing.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -273,7 +296,7 @@ public class Preprocessing {
     public Object detectDbpediaEntities(String text) {
 
         List<NameValuePair> list = new ArrayList();
-        NameValuePair nv1 = new BasicNameValuePair("confidence", "0.5");
+        NameValuePair nv1 = new BasicNameValuePair("confidence", "0.3");
         list.add(nv1);
         NameValuePair nv2 = new BasicNameValuePair("support", "0");
         list.add(nv2);
@@ -289,13 +312,65 @@ public class Preprocessing {
             post.setEntity(new UrlEncodedFormEntity(list, HTTP.UTF_8));
 
             //return executeService(post, "Resources", "@URI");
-            return executeServicePath(post, " $.Resources[*].@URI");
+            return executeServicePath(post, "$.Resources[*].@URI");
         } catch (URISyntaxException | IOException ex) {
             Logger.getLogger(Preprocessing.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
 
     }
+    
+    
+     public Object detectDbpediaEntitiestoArray (String text) {
+
+        List<NameValuePair> list = new ArrayList();
+        NameValuePair nv1 = new BasicNameValuePair("confidence", "0.3");
+        list.add(nv1);
+        NameValuePair nv2 = new BasicNameValuePair("support", "0");
+        list.add(nv2);
+        NameValuePair nv3 = new BasicNameValuePair("text", text);
+        list.add(nv3);
+
+        try {
+            URIBuilder builder;
+            builder = new URIBuilder("http://model.dbpedia-spotlight.org/en/annotate").addParameters(list);
+            HttpPost post = new HttpPost(builder.build());
+            System.out.println(builder.build());
+            post.addHeader("Accept", "application/json");
+            post.setEntity(new UrlEncodedFormEntity(list, HTTP.UTF_8));
+
+            //return executeService(post, "Resources", "@URI");
+            return JsonToArray (executeServicePath(post ,"$.Resources"));
+        } catch (URISyntaxException | IOException ex) {
+            Logger.getLogger(Preprocessing.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+
+    }
+     
+     public  Map <String,String> JsonToArray (Object obj) {
+           System.out.println ("sdasd");
+           System.out.print (obj);
+           if (obj != null){
+          JsonElement jelement = new JsonParser().parse(obj.toString());
+         // JsonObject  jobject = jelement.getAsJsonObject();
+          
+       //   jobject = jobject.getAsJsonObject("Resources");
+          JsonArray jarray = jelement.getAsJsonArray();
+          Map <String,String> mp = new HashMap (); 
+          for (JsonElement j  :jarray) {
+             String uri =  j.getAsJsonObject().get("@URI").getAsString();
+             String ori =  j.getAsJsonObject().get("@surfaceForm").getAsString();
+             mp.put(ori, uri);
+           }
+        /*  jobject = jarray.get(0).getAsJsonObject();
+          String result = jobject.get("translatedText").getAsString();*/
+    return mp;
+           }
+           
+           return null;
+    
+     }
 
     public void queryDbpedia(String URI, int level) throws RepositoryException {
 
