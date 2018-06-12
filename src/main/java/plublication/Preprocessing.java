@@ -242,6 +242,7 @@ public class Preprocessing {
                 } else {
                     log.error(response.toString());
                      System.out.print ("Trying again");
+                     httpClient = HttpClients.createDefault();
                     //return null;
                 }
             } catch (UnknownHostException e) {
@@ -266,8 +267,8 @@ public class Preprocessing {
 
         List<NameValuePair> list = new ArrayList();
 
-       // NameValuePair nv1 = new BasicNameValuePair("key", "trnsl.1.1.20180515T220323Z.a01167a60fd15c32.e1f33475375f91802f0e1da270a94bd99b412521");
-        NameValuePair nv1 = new BasicNameValuePair("key", "trnsl.1.1.20160321T160516Z.43cfb95e23a69315.6c0a2ae19f56388c134615f4740fbb1d400f15d3");
+        NameValuePair nv1 = new BasicNameValuePair("key", "trnsl.1.1.20180515T220323Z.a01167a60fd15c32.e1f33475375f91802f0e1da270a94bd99b412521");
+       // NameValuePair nv1 = new BasicNameValuePair("key", "trnsl.1.1.20160321T160516Z.43cfb95e23a69315.6c0a2ae19f56388c134615f4740fbb1d400f15d3");
         list.add(nv1);
         NameValuePair nv2 = new BasicNameValuePair("lang", "es-en");
         list.add(nv2);

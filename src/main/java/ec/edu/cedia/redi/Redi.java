@@ -136,15 +136,21 @@ public class Redi {
             String query = "PREFIX dct: <http://purl.org/dc/terms/>\n"
                     + "     PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n"
                     + "     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> \n"
-                    + " select distinct ?cname  ?author    (group_concat(DISTINCT ?s ; separator=\";\") as ?kws)  \n"
+                    + " select distinct ?cname  ?author    (group_concat(DISTINCT ?s ; separator=\";\") as ?kws) (group_concat(DISTINCT ?tl ; separator=\";\") as ?tws)  \n"
                     + "                       { \n"
                     + "                         GRAPH ?graphCl { \n"
                     + "                          ?cl rdfs:label ?cname . \n"
                     + "                          ?author dct:isPartOf ?cl .\n"
                     + "                          GRAPH ?graphRedi {\n"
-                    + "                            select ?pub ?s {\n"
+                    + "                            select ?pub ?s ?tl {\n"
                     + "                            ?author foaf:publications ?pub .\n"
-                    + "                            ?pub dct:subject [rdfs:label ?s]  \n"
+                    + "                            ?pub dct:subject [rdfs:label ?s] . "
+                    + "                              OPTIONAL {\n"
+                    + "                              ?author foaf:topic_interest  ?tp  .\n"
+                    + "                                      OPTIONAL  { "
+                    + "                                      ?tp rdfs:label ?tl      "
+                    + "                                      } "
+                    + "                            }"
                     + "                       }   }\n"
                     + "                    } } GROUP BY ?cname ?author";
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
@@ -154,7 +160,11 @@ public class Redi {
             TupleQueryResult result = q.evaluate();
             while (result.hasNext()) {
                 BindingSet variables = result.next();
-                authors.add(new Author((URI) variables.getBinding("author").getValue(), variables.getBinding("kws").getValue().stringValue()));
+                Author aut = new Author((URI) variables.getBinding("author").getValue(), variables.getBinding("kws").getValue().stringValue());
+                if (variables.hasBinding("tws")) {
+                    aut.setTopics(variables.getValue("tws").stringValue());
+                }
+                authors.add(aut);
             }
         } catch (MalformedQueryException ex) {
             log.error("Cannot execute query.", ex);
@@ -316,29 +326,30 @@ public class Redi {
     public Boolean askSubCluster(String cl) {
         try {
             RepositoryConnection connection = conn.getConnection();
-            
+
             String query = "PREFIX dct: <http://purl.org/dc/terms/>\n"
                     + "SELECT  (COUNT(?scl) as ?c)    WHERE {\n"
                     + "   GRAPH  ?graphCl { ?scl a <http://ucuenca.edu.ec/ontology#SubCluster>  .\n"
                     + "   ?scl dct:isPartOf ?cl .\n"
                     + "} }";
-            
-            TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);      
+
+            TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
             q.setBinding("cl", vf.createURI(cl));
             q.setBinding("graphCl", vf.createURI(RediRepository.CLUSTERS_CONTEXT));
             TupleQueryResult result = q.evaluate();
             while (result.hasNext()) {
-               BindingSet res = result.next();
-                if (res.hasBinding("c")){
-                int count = Integer.parseInt(res.getValue("c").stringValue());
-                if (count > 1 ) { return true;}
+                BindingSet res = result.next();
+                if (res.hasBinding("c")) {
+                    int count = Integer.parseInt(res.getValue("c").stringValue());
+                    if (count > 1) {
+                        return true;
+                    }
                 }
                 return false;
-                
-              //  publications.add(publication);
+
+                //  publications.add(publication);
             }
-            
-            
+
             return false;
         } catch (RepositoryException | MalformedQueryException | QueryEvaluationException ex) {
             java.util.logging.Logger.getLogger(Redi.class.getName()).log(Level.SEVERE, null, ex);

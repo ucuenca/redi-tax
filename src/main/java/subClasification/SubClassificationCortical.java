@@ -15,6 +15,7 @@ import ec.edu.cedia.redi.RediRepository;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,19 +51,7 @@ public class SubClassificationCortical {
             DbpediaRepository drep = DbpediaRepository.getInstance();
             Dbpedia db = new Dbpedia(drep);
             Preprocessing p = Preprocessing.getInstance();
-            System.out.printf("Test dbpedia");
-            System.out.print(db.DirectCategory("http://dbpedia.org/resource/Typhoon_Vicente"));
-            
-           Object v = p.CompareText(StringUtils.stripAccents("Computer Sciences"), StringUtils.stripAccents("Computer Sciences"), "weightedScoring");
-            System.out.print(v);
-            System.out.print ("TEST TYPE");
-            System.out.println( db.isCorrectType ("http://dbpedia.org/resource/Ecuador"));
-           // db.testquery();
-//            db.isEntityValid ("http://dbpedia.org/resource/Ecuador");
-            System.out.print ("DBPEDIA TEST");
-            System.out.println ( p.detectDbpediaEntitiestoArray("Ecuador, computer Sciences"));
-            List <NodoDbpedia> l = db.isAcademicDbpedia ("http://dbpedia.org/resource/Semantic_Web");
-            System.out.println (l.get(0).getNameEn()+l.get(0).getNameEs());
+             test ( r ,  db ,   p );
             /* List <String> test = new ArrayList ();
             test.add("Computer Sciences");
             test.add("Windows");
@@ -76,7 +65,8 @@ public class SubClassificationCortical {
             List <String> clusters = r.getclustersAvailable ();
             for (String cl:clusters) {
                  System.out.println("Cluster: " + cl);  
-            if (!r.askSubCluster(cl)){
+            if (true){
+          // if (!r.askSubCluster(cl)){
             List <String> total = new ArrayList () ;
            // List<Author> authors = r.getAuthorsbyCluster("http://skos.um.es/unesco6/1203");
              List<Author> authors = r.getAuthorsbyCluster(cl);
@@ -84,9 +74,15 @@ public class SubClassificationCortical {
             for (Author a:authors) {
             System.out.println("AUTOR: " + a.getURI());  
             
-             List <String> listauthork = preProccesingKeywords (a);
+             List <String> listauthork = preProccesingKeywords (a.getKeywords());
              a.setKeywords(String.join(", ", listauthork));
              total.addAll(listauthork);
+             
+              if (a.getTopics()!= null && a.getTopics().length() > 0){         
+                List <String> listauthorT = preProccesingKeywords (a.getTopics());
+                a.setTopics(String.join(", ", listauthorT));
+                 total.addAll(listauthorT);
+              }
             
             }
             
@@ -176,14 +172,38 @@ public class SubClassificationCortical {
         }
     }
     
-    public static List <String> preProccesingKeywords (Author a) {
+    public static void test (Redi r ,Dbpedia  db ,  Preprocessing p ) throws RepositoryException, IOException {
+        System.out.print ("Test is Academic");
+        System.out.print ( db.isAcademicDbpedia("http://dbpedia.org/resource/Revolution"));
+        System.out.print ( db.isAcademicDbpedia("http://dbpedia.org/resource/Distinctive_feature"));
+       
+    
+     System.out.printf("Test dbpedia");
+            System.out.print(db.DirectCategory("http://dbpedia.org/resource/Typhoon_Vicente"));
+            
+           Object v = p.CompareText(StringUtils.stripAccents("Computer Sciences"), StringUtils.stripAccents("Computer Sciences"), "weightedScoring");
+            System.out.print(v);
+            System.out.print ("TEST TYPE");
+            System.out.println( db.isCorrectType ("http://dbpedia.org/resource/Ecuador"));
+           // db.testquery();
+//            db.isEntityValid ("http://dbpedia.org/resource/Ecuador");
+            System.out.print ("DBPEDIA TEST");
+            System.out.println ( p.detectDbpediaEntitiestoArray("Ecuador, computer Sciences"));
+            List <NodoDbpedia> l = db.isAcademicDbpedia ("http://dbpedia.org/resource/Semantic_Web");
+            System.out.println (l.get(0).getNameEn()+l.get(0).getNameEs());
+    
+    }
+    
+    public static List <String> preProccesingKeywords (String key) {
         try {
             Preprocessing p = Preprocessing.getInstance();
-            System.out.println ( a.getURI());
+           // System.out.println ( a.getURI());
           //  Object r = p.detectLanguage(a.getKeywords());
           //  System.out.println (r.toString());
              //System.out.println (a.getKeywords());
-             String prek = a.getKeywords().replaceAll("[\"-\']", "").trim();
+              String all = key;
+         
+             String prek = all.replace("null","").replaceAll("[\"-\']", "").trim();
              if (prek.length() > 3000){
              prek=prek.substring(0,3000);
              }
@@ -294,16 +314,30 @@ public class SubClassificationCortical {
     }
     
     private static void subClusterAuthor ( List <Author> authors , List <NodoDbpedia> nodo , String cluster , Redi r) {
-         for (Author a :authors){
-            String [] kauthor = a.getKeywords().split(",");
+          
+        
+        for (Author a :authors){
+             int topicCluster = 0; 
+             int topicsize = a.getTopics()== null ? 0:a.getTopics().split(",").length ;
+             int actual = 0;
+             String all ="";
+             if (a.getTopics()!= null){
+              all = a.getTopics() +", "+a.getKeywords() ;
+             } else {
+              all = a.getKeywords();
+             }
+           // String [] kauthor = a.getKeywords().split(",");
+             String [] kauthor = all.split(",");
              System.out.println ("Author "+a.getURI()+"---");
             Map <String,NodoDbpedia> finalclusters = new HashMap ();
             for (String k : kauthor ){
+                actual++;
                  // System.out.println ("K: "+k);
                   k = k.trim();
                  for (NodoDbpedia no :nodo) {
                     if ( no.getOrigin().equals(k)){
                       System.out.println ("Clasf"+k);
+                      if (actual < topicsize) { topicCluster++; }
                       for (NodoDbpedia aca :no.getAcademic()){
                            System.out.println ("Clust"+aca.getUri()+"-"+aca.getNameEn());
                            if (!finalclusters.containsKey(aca.getUri())) {
@@ -314,7 +348,10 @@ public class SubClassificationCortical {
                     }
                  }
             }
-            r.storeSubcluster(a, finalclusters, cluster);
+            if (topicsize > 0 && topicCluster < 1) {
+            finalclusters.putAll(completeTopicCluster (a.getTopics(),finalclusters));
+            }
+         //   r.storeSubcluster(a, finalclusters, cluster);
             //saveSubclusterGraph (a , finalclusters ,cluster);
         }
     }
@@ -522,7 +559,39 @@ public class SubClassificationCortical {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    private static void saveSubclusterGraph(Author a, Map<String, NodoDbpedia> finalclusters , String cluster) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    private static Map<String,NodoDbpedia> completeTopicCluster(String topics, Map<String, NodoDbpedia> finalclusters) {
+         String[] topicslist = getRelevantTopics(topics.split(","));
+          Map <String,NodoDbpedia> newmap = new HashMap ();
+         for (String tp:topicslist){
+             try {
+                 String uri = "http://ucuenca.edu.ec/resource/subcluster#"+URLEncoder.encode(tp.trim(), "UTF-8");
+                 NodoDbpedia naca = new NodoDbpedia(uri);
+                 naca.setNameEn(tp);
+                 newmap.put(uri, naca);
+                 System.out.println ("Nuevo"+uri);
+             } catch (UnsupportedEncodingException ex) {
+                 Logger.getLogger(SubClassificationCortical.class.getName()).log(Level.SEVERE, null, ex);
+             }
+         }
+         return newmap;
+    }
+
+    private static String[] getRelevantTopics(String[] split) {
+        Map<String, Integer> aux = new HashMap();
+        for (String topic : split) {
+            for (String comparetopic : split) {
+                if (comparetopic.contains(topic)) {
+                    if (aux.containsKey(topic)) {
+                        aux.put(topic, aux.get(topic) + 1);
+                    } else {
+                        aux.put(topic, 0);
+                    }
+                }
+            }
+        }
+
+        List<String> ordertopic = orderMap(aux,0);
+
+        return ordertopic.size() > 5 ? ordertopic.subList(0, 5).toArray(new String[0]) : ordertopic.toArray(new String[0]);
     }
 }

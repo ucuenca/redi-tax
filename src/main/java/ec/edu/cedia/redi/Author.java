@@ -26,6 +26,15 @@ public class Author {
 
     private  URI uri;
     private  String keywords;
+    private  String topics; 
+
+    public String getTopics() {
+        return topics;
+    }
+
+    public void setTopics(String topics) {
+        this.topics = topics;
+    }
 
     public Author(URI author, String keywords) {
         this.uri = author;

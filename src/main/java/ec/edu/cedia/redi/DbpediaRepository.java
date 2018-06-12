@@ -34,9 +34,9 @@ public class DbpediaRepository implements AutoCloseable {
     private SPARQLRepository repository;
 
     static {
-        headers.put("Accept", "text/html");
-        //headers.put("Accept", "application/xhtml+xml");
-      //  headers.put("Accept", "application/xml");
+        //headers.put("Accept", "text/html");
+       // headers.put("Accept", "application/xhtml+xml");
+       // headers.put("Accept", "application/xml");
        // text/html,application/xhtml+xml,application/xml;
     }
     private static DbpediaRepository instance;
@@ -54,6 +54,10 @@ public class DbpediaRepository implements AutoCloseable {
             return new DbpediaRepository();
         }
         return instance;
+    }
+    
+    public static void NullInstance () {
+      instance = null;
     }
 
     /**
