@@ -59,7 +59,9 @@ public class GenerateGroups {
         try {
 //            args = new String[]{"-t=4", "-o=118", "-l=100"};
 //            args = new String[]{"-t=3", "f"};
+//            args = new String[]{"f"};
 //            args = new String[]{"-t=3"};
+//            args = new String[]{"-a=https://redi.cedia.edu.ec/resource/authors/UCUENCA/oai-pmh/SAQUICELA_GALARZA__VICTOR_HUGO"};
             cmd = parser.parse(options, args);
 
             if ((cmd.hasOption("offset") && !cmd.hasOption("limit")) || cmd.hasOption("limit") && !cmd.hasOption("offset")) {
@@ -67,7 +69,10 @@ public class GenerateGroups {
                 return;
             }
 
-            if (cmd.hasOption("threads")) {
+            if (cmd.hasOption("author")) {
+                String authorURI = cmd.getOptionValue("author");
+                inspectAuthor(authorURI);
+            } else if (cmd.hasOption("threads")) {
                 int threads = Integer.parseInt(cmd.getOptionValue("threads").trim());
                 boolean filter = cmd.hasOption("filter-authors");
                 if (cmd.hasOption("offset") && cmd.hasOption("limit")) {
@@ -89,13 +94,14 @@ public class GenerateGroups {
     private static void showHelp(String program, Options opts) {
         HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp(program, "", opts,
-                "Note: in order to process a small batch use both offset and limit options.",
+                "Note: in order to process a small batch use both offset and limit options."
+                + "\nthreads option is mandatory only to start process.",
                 true);
     }
 
     private static Options extractAreasOptions() {
         final Option threadsOption = Option.builder("t")
-                .required(true)
+                .required(false)
                 .longOpt("threads")
                 .hasArg(true)
                 .valueSeparator('=')
@@ -121,11 +127,18 @@ public class GenerateGroups {
                 .hasArg(false)
                 .desc("Filter authors already proccessed. Default value: false.")
                 .build();
+        final Option authorOption = Option.builder("a")
+                .required(false)
+                .longOpt("author")
+                .hasArg(true)
+                .desc("Build groups for author and print in stdo.")
+                .build();
         final Options options = new Options();
         options.addOption(threadsOption);
         options.addOption(offsetOption);
         options.addOption(limitOption);
         options.addOption(filterAuthorsOption);
+        options.addOption(authorOption);
         return options;
     }
 
@@ -149,14 +162,32 @@ public class GenerateGroups {
         }
     }
 
+    private static void inspectAuthor(String authorUri) throws Exception {
+        try (RediRepository rediRepository = RediRepository.getInstance();) {
+            final Redi redi = new Redi(rediRepository);
+            final Author author = redi.getAuthor(authorUri);
+            final List<UnescoHierarchy> dataset = UnescoDataSet.getInstance().getDataset();
+
+            ExecutorService pool = Executors.newFixedThreadPool(1);
+            pool.execute(new AreasExtractor(author, dataset, true));
+            pool.shutdown();
+        }
+    }
+
     private static class AreasExtractor implements Runnable {
 
         private Author author;
         private List<UnescoHierarchy> unescoDataset;
+        private boolean inspect = false;
 
         public AreasExtractor(Author author, List<UnescoHierarchy> unescoDataset) {
             this.author = author;
             this.unescoDataset = unescoDataset;
+        }
+
+        public AreasExtractor(Author author, List<UnescoHierarchy> unescoDataset, boolean inspect) {
+            this(author, unescoDataset);
+            this.inspect = inspect;
         }
 
         @Override
@@ -168,6 +199,7 @@ public class GenerateGroups {
                 Redi redi = new Redi(rediRepository);
 
                 KnowledgeAreas areas = new KnowledgeAreas(redi, unescoDataset);
+                areas.setInspect(inspect);
                 areas.extractArea(author);
             } catch (Exception ex) {
                 log.error("Cannot extract area", ex);
