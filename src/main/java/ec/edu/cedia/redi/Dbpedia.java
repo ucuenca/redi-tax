@@ -9,13 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.StatementImpl;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.query.BindingSet;
-import org.openrdf.query.BooleanQuery;
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.QueryLanguage;
@@ -32,12 +30,12 @@ import org.slf4j.LoggerFactory;
  */
 public class Dbpedia {
 
-    private  DbpediaRepository conn;
+    private DbpediaRepository conn;
     private final ValueFactory vf = ValueFactoryImpl.getInstance();
     private static final Logger log = LoggerFactory.getLogger(Dbpedia.class);
 
     public Dbpedia(DbpediaRepository conn) {
-        this.conn = conn; 
+        this.conn = conn;
     }
 
     public boolean isEntityValid(String ent) throws RepositoryException {
@@ -100,7 +98,7 @@ public class Dbpedia {
 
     public List<NodoDbpedia> isAcademicDbpedia(String ent) throws RepositoryException {
         int chance = 0;
-       /* try {
+        /* try {
             Thread.sleep((long) (1000 * (Math.random() * 10)));
         } catch (InterruptedException ex) {
             java.util.logging.Logger.getLogger(Dbpedia.class.getName()).log(Level.SEVERE, null, ex);
@@ -123,7 +121,8 @@ public class Dbpedia {
                         + " \n"
                         + "}";
                 // String query = "Select * where {?a a dbo:Place } limit 10";
-                TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
+                String suf = new String(new char[chance]).replace("\0", "\n#");
+                TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query + suf);
                 q.setBinding("entity", vf.createURI(ent));
                 q.setMaxQueryTime(5000);
                 TupleQueryResult result = q.evaluate();
@@ -145,7 +144,7 @@ public class Dbpedia {
                         // dbn.getAcademic().add(academic);
 
                     }
-                        //  String
+                    //  String
                     // cluster.add(variables.getBinding("cl").getValue().stringValue());
                     //authors.add(new Author((URI) variables.getBinding("cl").getValue(), variables.getBinding("kws").getValue().stringValue()));
                 }
@@ -166,7 +165,7 @@ public class Dbpedia {
             } catch (Exception ex) {
                 java.util.logging.Logger.getLogger(Dbpedia.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
+
             trivialquery();
             System.out.print("esperando..");
 
@@ -267,7 +266,8 @@ public class Dbpedia {
                         + " \n"
                         + "}";
                 // String query = "Select * where {?a a dbo:Place } limit 10";
-                TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
+                String suf = new String(new char[chance]).replace("\0", "\n#");
+                TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query + suf);
                 q.setBinding("entity", vf.createURI(ent));
                 q.setMaxQueryTime(5000);
                 TupleQueryResult result = q.evaluate();
@@ -330,8 +330,8 @@ public class Dbpedia {
             try {
                 RepositoryConnection connection = conn.getConnection();
                 try {
-
-                    TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
+                    String suf = new String(new char[chance]).replace("\0", "\n#");
+                    TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query + suf);
                     q.setBinding("entity", vf.createURI(entity));
                     q.setMaxQueryTime(5000);
 
@@ -363,16 +363,16 @@ public class Dbpedia {
                     connection.close();
                 }
                 chance++;
-                 try {
-                conn.close();
-                DbpediaRepository.NullInstance();
-                conn = DbpediaRepository.getInstance();
-                //conn =  
-            } catch (Exception ex) {
-                java.util.logging.Logger.getLogger(Dbpedia.class.getName()).log(Level.SEVERE, null, ex);
-            }
+                try {
+                    conn.close();
+                    DbpediaRepository.NullInstance();
+                    conn = DbpediaRepository.getInstance();
+                    //conn =  
+                } catch (Exception ex) {
+                    java.util.logging.Logger.getLogger(Dbpedia.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 trivialquery();
-               
+
             } catch (RepositoryException ex) {
                 java.util.logging.Logger.getLogger(Dbpedia.class.getName()).log(Level.SEVERE, null, ex);
             }

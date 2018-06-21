@@ -6,14 +6,13 @@
 
 package ec.edu.cedia.redi;
 
-import ec.edu.cedia.redi.unesco.UnescoNomeclatureConnection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sparql.SPARQLRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -56,8 +55,13 @@ public class DbpediaRepository implements AutoCloseable {
         return instance;
     }
     
-    public static void NullInstance () {
+    public static synchronized void NullInstance () {
       instance = null;
+        try {
+            Thread.sleep(1000*5);
+        } catch (InterruptedException ex) {
+            java.util.logging.Logger.getLogger(DbpediaRepository.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     /**
