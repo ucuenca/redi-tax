@@ -16,9 +16,9 @@
  */
 package ec.edu.cedia.redi.repository;
 
-import com.complexible.stardog.gremlin.StardogGraphConfiguration;
-import com.complexible.stardog.gremlin.StardogGraphConfiguration.Builder;
-import com.complexible.stardog.gremlin.StardogGraphFactory;
+//import com.complexible.stardog.gremlin.StardogGraphConfiguration;
+//import com.complexible.stardog.gremlin.StardogGraphConfiguration.Builder;
+//import com.complexible.stardog.gremlin.StardogGraphFactory;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
 /**
@@ -35,7 +35,7 @@ public class StardogConnection implements AutoCloseable {
     private final static String BASE_IRI = "http://redi.cedi.edu.ec/resource/";
     private final static String CONTEXT = "http://redi.cedi.edu.ec/context/redi";
 
-    private final Graph graph;
+    private Graph graph;
 
     private StardogConnection() {
         this(DATABASE, USER, PASSWD, BASE_IRI, CONTEXT);
@@ -46,12 +46,12 @@ public class StardogConnection implements AutoCloseable {
     }
 
     private StardogConnection(String database, String user, String passwd, String baseIRI, String context) {
-        Builder conf = StardogGraphConfiguration.builder();
-        conf.connectionString(database)
-                .credentials(user, passwd)
-                .baseIRI(baseIRI)
-                .namedGraph(context).labelIRI("http://redi.edu.ec/label");
-        graph = StardogGraphFactory.open(conf.build());
+//        Builder conf = StardogGraphConfiguration.builder();
+//        conf.connectionString(database)
+//                .credentials(user, passwd)
+//                .baseIRI(baseIRI)
+//                .namedGraph(context).labelIRI("http://redi.edu.ec/label");
+//        graph = StardogGraphFactory.open(conf.build());
     }
 
     public static StardogConnection instance() {

@@ -57,7 +57,7 @@ public class GenerateGroups {
         final Options options = extractAreasOptions();
         CommandLine cmd;
         try {
-//            args = new String[]{"-t=4", "-o=118", "-l=100"};
+//            args = new String[]{"-t=4", "-o=118", "-l=100", "-f"};
 //            args = new String[]{"-t=3", "f"};
 //            args = new String[]{"f"};
 //            args = new String[]{"-t=3"};
