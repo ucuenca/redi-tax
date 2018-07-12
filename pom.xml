@@ -68,6 +68,10 @@
                             <mainClass>ec.edu.cedia.redi.console.RecognizeAreaExec</mainClass>
                             <id>recognize</id>
                         </program>
+                           <program>
+                            <mainClass>ec.edu.cedia.redi.console.GenerateSubClustersExec</mainClass>
+                            <id>subclusters</id>
+                        </program>
                     </programs>
                     <assembleDirectory>${project.build.directory}/redi-tax</assembleDirectory>
                     <platforms>
