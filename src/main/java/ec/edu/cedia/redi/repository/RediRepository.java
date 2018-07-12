@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ec.edu.cedia.redi;
+package ec.edu.cedia.redi.repository;
 
 import ec.edu.cedia.redi.unesco.UnescoNomeclatureConnection;
 import java.util.HashMap;

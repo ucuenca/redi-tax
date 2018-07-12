@@ -5,6 +5,7 @@
  */
 package ec.edu.cedia.redi;
 
+import ec.edu.cedia.redi.repository.RediRepository;
 import corticalClasification.AreaUnesco;
 import java.util.Arrays;
 import java.util.List;

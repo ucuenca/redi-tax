@@ -5,6 +5,7 @@
  */
 package ec.edu.cedia.redi;
 
+import ec.edu.cedia.redi.repository.DbpediaRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -126,7 +127,7 @@ public class Dbpedia {
                 q.setBinding("entity", vf.createURI(ent));
                 q.setMaxQueryTime(5000);
                 TupleQueryResult result = q.evaluate();
-                List<NodoDbpedia> laca = new ArrayList();
+                List<NodoDbpedia> laca = new ArrayList<>();
                 //dbn.setOrigin(ent);
 
                 while (result.hasNext()) {
@@ -271,7 +272,7 @@ public class Dbpedia {
                 q.setBinding("entity", vf.createURI(ent));
                 q.setMaxQueryTime(5000);
                 TupleQueryResult result = q.evaluate();
-                List<NodoDbpedia> laca = new ArrayList();
+                List<NodoDbpedia> laca = new ArrayList<>();
                 //dbn.setOrigin(ent);
 
                 while (result.hasNext()) {
@@ -335,7 +336,7 @@ public class Dbpedia {
                     q.setMaxQueryTime(5000);
 
                     TupleQueryResult result = q.evaluate();
-                    List<NodoDbpedia> nl = new ArrayList();
+                    List<NodoDbpedia> nl = new ArrayList<>();
 
                     while (result.hasNext()) {
 

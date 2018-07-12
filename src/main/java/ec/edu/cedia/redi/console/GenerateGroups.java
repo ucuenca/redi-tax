@@ -19,7 +19,7 @@ package ec.edu.cedia.redi.console;
 import corticalClasification.KnowledgeAreas;
 import ec.edu.cedia.redi.Author;
 import ec.edu.cedia.redi.Redi;
-import ec.edu.cedia.redi.RediRepository;
+import ec.edu.cedia.redi.repository.RediRepository;
 import ec.edu.cedia.redi.unesco.UnescoDataSet;
 import ec.edu.cedia.redi.unesco.UnescoNomeclatureConnection;
 import ec.edu.cedia.redi.unesco.model.UnescoHierarchy;
@@ -57,7 +57,7 @@ public class GenerateGroups {
         final Options options = extractAreasOptions();
         CommandLine cmd;
         try {
-//            args = new String[]{"-t=4", "-o=118", "-l=100", "-f"};
+            args = new String[]{"-t=4", "-o=8800", "-l=1", "-f"};
 //            args = new String[]{"-t=3", "f"};
 //            args = new String[]{"f"};
 //            args = new String[]{"-t=3"};

@@ -10,7 +10,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.jayway.jsonpath.JsonPath;
-import ec.edu.cedia.redi.utils.IOGraph;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -18,6 +17,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,15 +33,12 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
-import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.openrdf.model.Statement;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -55,15 +52,12 @@ import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sparql.SPARQLRepository;
 import org.openrdf.rio.ParserConfig;
 import org.slf4j.LoggerFactory;
-import tinkerpop.GraphOperations;
 
 /**
  *
  * @author joe
  */
 public class Preprocessing {
-
-    GraphOperations gp = new GraphOperations();
 
     private final ValueFactory vf = ValueFactoryImpl.getInstance();
     private final static String DEFAULT_CONTEXT = "http://dbpedia.org/sparql";
@@ -113,33 +107,32 @@ public class Preprocessing {
         return executeService(post, null, null);
     }
 
-        
-        public Object CompareText(String text1, String text2 , String metric) throws  IOException {
+    public Object CompareText(String text1, String text2, String metric) throws IOException {
 
         HttpPost post = new HttpPost("http://api.cortical.io/rest/compare?retina_name=en_associative");
 
         int timeoutSeconds = 10;
         int CONNECTION_TIMEOUT_MS = timeoutSeconds * 1000; // Timeout in millis.
         RequestConfig requestConfig = RequestConfig.custom()
-        .setConnectionRequestTimeout(CONNECTION_TIMEOUT_MS)
-        .setConnectTimeout(CONNECTION_TIMEOUT_MS)
-        .setSocketTimeout(CONNECTION_TIMEOUT_MS)
-        .build(); 
-        
-       JSONObject json1 = new JSONObject();
-       json1.put("text", text1);
-               
-       JSONObject json2 = new JSONObject();
-       json2.put("text", text2);
-             
-        JSONArray jsonArr = new JSONArray (); 
-        jsonArr.add( json1);
-        jsonArr.add( json2);
-     
-       // StringEntity textEntity = new StringEntity(" { \"elements\" : [{ \"term\": \"Pablo Picasso\"  }, " +
-       // "{ \"text\": \"Gustav Klimt was born in Baumgarten, near Vienna in Austria-Hungary, the second of seven children\"}]}");
+                .setConnectionRequestTimeout(CONNECTION_TIMEOUT_MS)
+                .setConnectTimeout(CONNECTION_TIMEOUT_MS)
+                .setSocketTimeout(CONNECTION_TIMEOUT_MS)
+                .build();
+
+        JSONObject json1 = new JSONObject();
+        json1.put("text", text1);
+
+        JSONObject json2 = new JSONObject();
+        json2.put("text", text2);
+
+        JSONArray jsonArr = new JSONArray();
+        jsonArr.add(json1);
+        jsonArr.add(json2);
+
+        // StringEntity textEntity = new StringEntity(" { \"elements\" : [{ \"term\": \"Pablo Picasso\"  }, " +
+        // "{ \"text\": \"Gustav Klimt was born in Baumgarten, near Vienna in Austria-Hungary, the second of seven children\"}]}");
         System.out.println(jsonArr.toJSONString());
-        StringEntity textEntity = new StringEntity( jsonArr.toJSONString() , Charset.defaultCharset());
+        StringEntity textEntity = new StringEntity(jsonArr.toJSONString(), Charset.defaultCharset());
 
         post.setEntity(textEntity);
         //  post.addHeader("api-key", "1c556a80-8595-11e6-a057-97f4c970893c");
@@ -153,7 +146,6 @@ public class Preprocessing {
     }
 
     public double[] compareTextBulk(String bulk, String metric) {
-
 
         HttpPost post = new HttpPost("http://api.cortical.io/rest/compare/bulk?retina_name=en_associative");
 
@@ -173,7 +165,7 @@ public class Preprocessing {
         return scores;
     }
 
-      public Object executeService(HttpUriRequest request, @Nullable String key, @Nullable String Secondkey) {
+    public Object executeService(HttpUriRequest request, @Nullable String key, @Nullable String Secondkey) {
         while (true) {
             try {
                 HttpResponse response = httpClient.execute(request);
@@ -188,7 +180,7 @@ public class Preprocessing {
                             System.out.print(parser);
                             if (((JsonObject) parser).get(key) instanceof JsonArray) {
                                 JsonArray ja = (JsonArray) ((JsonObject) parser).get(key);
-                                List auxl = new ArrayList();
+                                List<String> auxl = new ArrayList<>();
 
                                 for (JsonElement a : ja) {
                                     if (a instanceof JsonObject) {
@@ -220,7 +212,7 @@ public class Preprocessing {
                 log.error("Cannot make request", ex);
             }
         }
-}
+    }
 
     public Object executeServicePath(HttpUriRequest request, @Nullable String path) {
         while (true) {
@@ -234,15 +226,14 @@ public class Preprocessing {
                         // Object parserresponse = new JsonParser().parse(jsonResult);
 
                         return JsonPath.read(jsonResult, path);
-                    }catch (Exception e)
-                    {
-                      System.out.print ("Error Path"+e);
-                      return null;
+                    } catch (Exception e) {
+                        System.out.print("Error Path" + e);
+                        return null;
                     }
                 } else {
                     log.error(response.toString());
-                     System.out.print ("Trying again");
-                     httpClient = HttpClients.createDefault();
+                    System.out.print("Trying again");
+                    httpClient = HttpClients.createDefault();
                     //return null;
                 }
             } catch (UnknownHostException e) {
@@ -253,12 +244,12 @@ public class Preprocessing {
             }
         }
     }
-    
-     public Object traductor(String palabras) throws IOException { 
-      return traductor( palabras , 1);
-     }
 
-    public Object traductor(String palabras , int k ) throws IOException {
+    public Object traductor(String palabras) throws IOException {
+        return traductor(palabras, 1);
+    }
+
+    public Object traductor(String palabras, int k) throws IOException {
         String contextEs = "contexto, ";
         String contextEn = "context, ";
 
@@ -269,14 +260,14 @@ public class Preprocessing {
          param.put("text", contextEs + palabras);
          param.put("options", "1");*/
 
-        List<NameValuePair> list = new ArrayList();
-         NameValuePair nv1;
-         log.info("using k"+k);
-         
-        if (k == 1 ){
-         nv1 = new BasicNameValuePair("key", "trnsl.1.1.20180515T220323Z.a01167a60fd15c32.e1f33475375f91802f0e1da270a94bd99b412521");
-        } else {      
-         nv1 = new BasicNameValuePair("key", "trnsl.1.1.20160321T160516Z.43cfb95e23a69315.6c0a2ae19f56388c134615f4740fbb1d400f15d3");
+        List<NameValuePair> list = new ArrayList<>();
+        NameValuePair nv1;
+        log.info("using k" + k);
+
+        if (k == 1) {
+            nv1 = new BasicNameValuePair("key", "trnsl.1.1.20180515T220323Z.a01167a60fd15c32.e1f33475375f91802f0e1da270a94bd99b412521");
+        } else {
+            nv1 = new BasicNameValuePair("key", "trnsl.1.1.20160321T160516Z.43cfb95e23a69315.6c0a2ae19f56388c134615f4740fbb1d400f15d3");
         }
         list.add(nv1);
         NameValuePair nv2 = new BasicNameValuePair("lang", "es-en");
@@ -289,11 +280,11 @@ public class Preprocessing {
         try {
 
             URIBuilder builder = new URIBuilder("https://translate.yandex.net/api/v1.5/tr.json/translate");
-                  //  .addParameters(list);
+            //  .addParameters(list);
             //  System.out.print("URI"+builder.build());
             HttpPost request = new HttpPost(builder.build());
-            request.setEntity(new UrlEncodedFormEntity(list, HTTP.UTF_8));
-           // request.s
+            request.setEntity(new UrlEncodedFormEntity(list, StandardCharsets.UTF_8));
+            // request.s
             // return executeService (request , "text" , null);
             return executeServicePath(request, "$.text[*]");
         } catch (URISyntaxException ex) {
@@ -305,7 +296,7 @@ public class Preprocessing {
 
     public Object detectDbpediaEntities(String text) {
 
-        List<NameValuePair> list = new ArrayList();
+        List<NameValuePair> list = new ArrayList<>();
         NameValuePair nv1 = new BasicNameValuePair("confidence", "0.3");
         list.add(nv1);
         NameValuePair nv2 = new BasicNameValuePair("support", "0");
@@ -319,21 +310,20 @@ public class Preprocessing {
             HttpPost post = new HttpPost(builder.build());
             System.out.println(builder.build());
             post.addHeader("Accept", "application/json");
-            post.setEntity(new UrlEncodedFormEntity(list, HTTP.UTF_8));
+            post.setEntity(new UrlEncodedFormEntity(list, StandardCharsets.UTF_8));
 
             //return executeService(post, "Resources", "@URI");
             return executeServicePath(post, "$.Resources[*].@URI");
-        } catch (URISyntaxException | IOException ex) {
+        } catch (URISyntaxException ex) {
             Logger.getLogger(Preprocessing.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
 
     }
-    
-    
-     public Object detectDbpediaEntitiestoArray (String text) {
 
-        List<NameValuePair> list = new ArrayList();
+    public Object detectDbpediaEntitiestoArray(String text) {
+
+        List<NameValuePair> list = new ArrayList<>();
         NameValuePair nv1 = new BasicNameValuePair("confidence", "0.3");
         list.add(nv1);
         NameValuePair nv2 = new BasicNameValuePair("support", "0");
@@ -347,40 +337,40 @@ public class Preprocessing {
             HttpPost post = new HttpPost(builder.build());
             System.out.println(builder.build());
             post.addHeader("Accept", "application/json");
-            post.setEntity(new UrlEncodedFormEntity(list, HTTP.UTF_8));
+            post.setEntity(new UrlEncodedFormEntity(list, StandardCharsets.UTF_8));
 
             //return executeService(post, "Resources", "@URI");
-            return JsonToArray (executeServicePath(post ,"$.Resources"));
-        } catch (URISyntaxException | IOException ex) {
+            return JsonToArray(executeServicePath(post, "$.Resources"));
+        } catch (URISyntaxException ex) {
             Logger.getLogger(Preprocessing.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
 
     }
-     
-     public  Map <String,String> JsonToArray (Object obj) {
-           System.out.println ("sdasd");
-           System.out.print (obj);
-           if (obj != null){
-          JsonElement jelement = new JsonParser().parse(obj.toString());
-         // JsonObject  jobject = jelement.getAsJsonObject();
-          
-       //   jobject = jobject.getAsJsonObject("Resources");
-          JsonArray jarray = jelement.getAsJsonArray();
-          Map <String,String> mp = new HashMap (); 
-          for (JsonElement j  :jarray) {
-             String uri =  j.getAsJsonObject().get("@URI").getAsString();
-             String ori =  j.getAsJsonObject().get("@surfaceForm").getAsString();
-             mp.put(ori, uri);
-           }
-        /*  jobject = jarray.get(0).getAsJsonObject();
+
+    public Map<String, String> JsonToArray(Object obj) {
+        System.out.println("sdasd");
+        System.out.print(obj);
+        if (obj != null) {
+            JsonElement jelement = new JsonParser().parse(obj.toString());
+            // JsonObject  jobject = jelement.getAsJsonObject();
+
+            //   jobject = jobject.getAsJsonObject("Resources");
+            JsonArray jarray = jelement.getAsJsonArray();
+            Map<String, String> mp = new HashMap<>();
+            for (JsonElement j : jarray) {
+                String uri = j.getAsJsonObject().get("@URI").getAsString();
+                String ori = j.getAsJsonObject().get("@surfaceForm").getAsString();
+                mp.put(ori, uri);
+            }
+            /*  jobject = jarray.get(0).getAsJsonObject();
           String result = jobject.get("translatedText").getAsString();*/
-    return mp;
-           }
-           
-           return null;
-    
-     }
+            return mp;
+        }
+
+        return null;
+
+    }
 
     public void queryDbpedia(String URI, int level) throws RepositoryException {
 
@@ -421,7 +411,6 @@ public class Preprocessing {
                 System.out.println(val);
                 System.out.println("Actual" + URI);
                 System.out.println(val.getSubject() + " - " + val.getPredicate() + " - " + val.getObject());
-                gp.RDF2Graph(val.getSubject().stringValue(), val.getPredicate().stringValue(), val.getObject().stringValue());
                 if (URI.equals(val.getObject().stringValue())) {
                     continue;
                 }
@@ -445,17 +434,7 @@ public class Preprocessing {
 //        queryDbpedia("http://dbpedia.org/resource/Programming_language", 3);
 //        queryDbpedia("http://dbpedia.org/resource/Computer_science", 4);
         queryDbpedia(uri, 3);
-        IOGraph.write(gp.getGraph(), "coco2.graphml");
-    }
-
-    public void entitiesEnrichment(String uri, Graph graph) throws RepositoryException {
-
-//        queryDbpedia("http://dbpedia.org/resource/Programming_language", 3);
-//        queryDbpedia("http://dbpedia.org/resource/Computer_science", 4);
-        gp.setGraph(graph);
-        gp.setG(graph.traversal());
-        queryDbpedia(uri, 3);
-        // IOGraph.write(gp.getGraph(), "coco2.graphml");
+//        IOGraph.write(gp.getGraph(), "coco2.graphml");
     }
 
 }
