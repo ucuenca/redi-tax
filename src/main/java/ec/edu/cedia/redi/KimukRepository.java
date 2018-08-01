@@ -16,6 +16,7 @@
  */
 package ec.edu.cedia.redi;
 
+
 import ec.edu.cedia.redi.unesco.UnescoNomeclatureConnection;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,14 +32,14 @@ import org.slf4j.LoggerFactory;
  *
  * @author Xavier Sumba <xavier.sumba93@ucuenca.ec>
  */
-public class RediRepository implements AutoCloseable, Repositories {
+public class KimukRepository implements AutoCloseable, Repositories {
 
-    public final static String ENDPOINT_REDI = "https://rediclon.cedia.edu.ec/sparql";
+    public final static String ENDPOINT_REDI = "https://rediclon.cedia.edu.ec/kimuk/sparql";
     private final static String QUERY_ENDPOINT_REDI = ENDPOINT_REDI + "/select";
     private final static String UPDATE_ENDPOINT_REDI = ENDPOINT_REDI + "/update";
-    public final static String DEFAULT_CONTEXT = "https://redi.cedia.edu.ec/context/redi";
-    public final static String AUTHOR_CONTEXT = "https://redi.cedia.edu.ec/context/authors";
-    public final static String CLUSTERS_CONTEXT = "https://redi.cedia.edu.ec/context/clusters";
+    public final static String DEFAULT_CONTEXT = "https://redi.cedia.edu.ec/kimuk/context/redi";
+    public final static String AUTHOR_CONTEXT = "https://redi.cedia.edu.ec/kimuk/context/authors";
+    public final static String CLUSTERS_CONTEXT = "https://redi.cedia.edu.ec/kimuk/context/clusters";
     private static final Logger log = LoggerFactory.getLogger(UnescoNomeclatureConnection.class);
     private static final Map<String, String> headers = new HashMap<>();
     private SPARQLRepository repository;
@@ -46,17 +47,17 @@ public class RediRepository implements AutoCloseable, Repositories {
     static {
         headers.put("Accept", "application/ld+json");
     }
-    private static RediRepository instance;
+    private static KimukRepository instance;
 
-    private RediRepository() throws RepositoryException {
+    private KimukRepository() throws RepositoryException {
         repository = new SPARQLRepository(QUERY_ENDPOINT_REDI, UPDATE_ENDPOINT_REDI);
         repository.initialize();
         log.debug("Initializing a repository REDI endpoint.");
     }
 
-    public static synchronized RediRepository getInstance() throws RepositoryException {
+    public static synchronized KimukRepository getInstance() throws RepositoryException {
         if (instance == null) {
-            return new RediRepository();
+            return new KimukRepository();
         }
         return instance;
     }
@@ -77,13 +78,13 @@ public class RediRepository implements AutoCloseable, Repositories {
             repository.shutDown();
         }
     }
-
-    @Override
+    
+     @Override
     public String getContext() {
         return DEFAULT_CONTEXT;
     }
-
-    @Override
+    
+      @Override
     public String getClusterGraph() {
         return CLUSTERS_CONTEXT;
        // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -94,4 +95,5 @@ public class RediRepository implements AutoCloseable, Repositories {
       return AUTHOR_CONTEXT;  
      // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+    
 }

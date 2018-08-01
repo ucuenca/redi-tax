@@ -70,6 +70,7 @@ public class Preprocessing {
     private org.slf4j.Logger log = LoggerFactory.getLogger(Preprocessing.class);
     private static Preprocessing instanceService = new Preprocessing();
     private HttpClient httpClient = HttpClients.createDefault();
+    int auxk = 0;
 
     private Preprocessing() {
     }
@@ -239,7 +240,14 @@ public class Preprocessing {
                       System.out.print ("Error Path"+e);
                       return null;
                     }
-                } else {
+                } else if (response.getStatusLine().getStatusCode() == 403) {
+                    log.error(response.toString());
+                    System.out.print ("Change request");
+                    return false;
+                }
+                else {
+                    
+                    
                     log.error(response.toString());
                      System.out.print ("Trying again");
                      httpClient = HttpClients.createDefault();
@@ -255,12 +263,16 @@ public class Preprocessing {
     }
     
      public Object traductor(String palabras) throws IOException { 
-      return traductor( palabras , 1);
+      return traductor( palabras , 0);
      }
 
     public Object traductor(String palabras , int k ) throws IOException {
         String contextEs = "contexto, ";
         String contextEn = "context, ";
+        
+        String []  yandexk = {"trnsl.1.1.20180515T220323Z.a01167a60fd15c32.e1f33475375f91802f0e1da270a94bd99b412521",
+            "trnsl.1.1.20180515T220323Z.a01167a60fd15c32.e1f33475375f91802f0e1da270a94bd99b412521",
+            "trnsl.1.1.20180723T205130Z.3c69ff2bec293467.56151bc08ddf7bdc550288f9ca3f7046d6ea5391"};
 
         String urlbase = "https://translate.yandex.net/api/v1.5/tr.json/translate";
         /* HashMap <String, String> param = new HashMap<>();
@@ -269,15 +281,16 @@ public class Preprocessing {
          param.put("text", contextEs + palabras);
          param.put("options", "1");*/
 
+         while  (k+auxk < yandexk.length){
+        
         List<NameValuePair> list = new ArrayList();
          NameValuePair nv1;
-         log.info("using k"+k);
+         log.info("using k "+(k+ auxk)) ;
+
          
-        if (k == 1 ){
-         nv1 = new BasicNameValuePair("key", "trnsl.1.1.20180515T220323Z.a01167a60fd15c32.e1f33475375f91802f0e1da270a94bd99b412521");
-        } else {      
-         nv1 = new BasicNameValuePair("key", "trnsl.1.1.20160321T160516Z.43cfb95e23a69315.6c0a2ae19f56388c134615f4740fbb1d400f15d3");
-        }
+            
+         nv1 = new BasicNameValuePair("key", yandexk[k + auxk] );
+        
         list.add(nv1);
         NameValuePair nv2 = new BasicNameValuePair("lang", "es-en");
         list.add(nv2);
@@ -295,12 +308,23 @@ public class Preprocessing {
             request.setEntity(new UrlEncodedFormEntity(list, HTTP.UTF_8));
            // request.s
             // return executeService (request , "text" , null);
-            return executeServicePath(request, "$.text[*]");
+            Object response =  executeServicePath(request, "$.text[*]");
+            if (response instanceof Boolean) {
+             auxk=auxk+1;
+                 
+             log.info("Trying again with "+k+auxk);
+            }else {
+            return response;
+            }
+           
         } catch (URISyntaxException ex) {
             Logger.getLogger(Preprocessing.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
         }
-
-        return "FAIL";
+         }
+         
+         return null;
+      
     }
 
     public Object detectDbpediaEntities(String text) {

@@ -8,9 +8,11 @@ package subClasification;
 import ec.edu.cedia.redi.Author;
 import ec.edu.cedia.redi.Dbpedia;
 import ec.edu.cedia.redi.DbpediaRepository;
+import ec.edu.cedia.redi.KimukRepository;
 import ec.edu.cedia.redi.NodoDbpedia;
 import ec.edu.cedia.redi.Redi;
 import ec.edu.cedia.redi.RediRepository;
+import ec.edu.cedia.redi.Repositories;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
@@ -44,7 +46,7 @@ public class SubClassificationCortical {
      * @param args the command line arguments
      */
     public static void main(String[] args) throws InterruptedException, IOException {
-        executeSubGroup(true, true , 1);
+        executeSubGroup(true, true , 2 , 0);
     }
 
     public static void test(Redi r, Dbpedia db, Preprocessing p) throws RepositoryException, IOException {
@@ -68,9 +70,14 @@ public class SubClassificationCortical {
 
     }
 
-    public static void executeSubGroup(Boolean filter, Boolean Save , int key) {
+    public static void executeSubGroup(Boolean filter, Boolean Save , int key , int rep) {
         try {
-            RediRepository rp = RediRepository.getInstance();
+            Repositories rp;
+            if (rep == 0){
+            rp = RediRepository.getInstance();
+            }else {
+            rp = KimukRepository.getInstance();
+            }
             Redi r = new Redi(rp);
 
             DbpediaRepository drep = DbpediaRepository.getInstance();
@@ -195,7 +202,7 @@ public class SubClassificationCortical {
             if (prek.length() > 3000) {
                 prek = prek.substring(0, 3000);
             }
-            List<String> kt = Arrays.asList(p.traductor(prek , k).toString().replace("[\"", "").replace("\"]", "").replace("context,", "").toLowerCase().split(";"));
+            List<String> kt = Arrays.asList(p.traductor(prek , k-1).toString().replace("[\"", "").replace("\"]", "").replace("context,", "").toLowerCase().split(";"));
             kt = kt.stream().map(s -> s.trim()).filter(s -> s.length() > 0).collect(Collectors.toList());
             List<String> ktnd = deleteDuplicate(kt);
             System.out.println(ktnd);

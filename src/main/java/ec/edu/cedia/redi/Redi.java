@@ -57,12 +57,12 @@ import plublication.Preprocessing;
  */
 public class Redi {
 
-    private final RediRepository conn;
+    private final Repositories conn;
     private final ValueFactory vf = ValueFactoryImpl.getInstance();
     private static final Logger log = LoggerFactory.getLogger(Redi.class);
     private static final String UC_PREFIX = "http://ucuenca.edu.ec/ontology#";
 
-    public Redi(RediRepository conn) {
+    public Redi(Repositories conn) {
         this.conn = conn;
     }
 
@@ -96,8 +96,8 @@ public class Redi {
                     + "  }\n"
                     + "} GROUP BY ?a";
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
-            q.setBinding("redi", vf.createURI(RediRepository.DEFAULT_CONTEXT));
-            q.setBinding("authors", vf.createURI(RediRepository.AUTHOR_CONTEXT));
+            q.setBinding("redi", vf.createURI(conn.getContext()));
+            q.setBinding("authors", vf.createURI(conn.getAuthorGraph()));
             q.setBinding("author", vf.createURI(uri));
             TupleQueryResult result = q.evaluate();
             if (result.hasNext()) {
@@ -158,8 +158,8 @@ public class Redi {
                 query += String.format("\nOFFSET %s LIMIT %s ", offset, limit);
             }
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
-            q.setBinding("redi", vf.createURI(RediRepository.DEFAULT_CONTEXT));
-            q.setBinding("authors", vf.createURI(RediRepository.AUTHOR_CONTEXT));
+            q.setBinding("redi", vf.createURI(conn.getContext()));
+            q.setBinding("authors", vf.createURI(conn.getAuthorGraph()));
             TupleQueryResult result = q.evaluate();
             while (result.hasNext()) {
                 BindingSet variables = result.next();
@@ -219,8 +219,8 @@ public class Redi {
                     + "                       }   }\n"
                     + "                    } } GROUP BY ?cname ?author";
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
-            q.setBinding("graphRedi", vf.createURI(RediRepository.DEFAULT_CONTEXT));
-            q.setBinding("graphCl", vf.createURI(RediRepository.CLUSTERS_CONTEXT));
+            q.setBinding("graphRedi", vf.createURI(conn.getContext()));
+            q.setBinding("graphCl", vf.createURI(conn.getClusterGraph()));
             q.setBinding("cl", vf.createURI(cl));
             TupleQueryResult result = q.evaluate();
             while (result.hasNext()) {
@@ -256,7 +256,7 @@ public class Redi {
                     + "}";
 
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
-            q.setBinding("graphCl", vf.createURI(RediRepository.CLUSTERS_CONTEXT));
+            q.setBinding("graphCl", vf.createURI(conn.getClusterGraph()));
             TupleQueryResult result = q.evaluate();
             while (result.hasNext()) {
                 BindingSet variables = result.next();
@@ -279,7 +279,7 @@ public class Redi {
         try {
             String query = "ASK {GRAPH ?cluster { ?author ?b ?c }}";
             BooleanQuery q = connection.prepareBooleanQuery(QueryLanguage.SPARQL, query);
-            q.setBinding("cluster", vf.createURI(RediRepository.CLUSTERS_CONTEXT));
+            q.setBinding("cluster", vf.createURI(conn.getClusterGraph()));
             q.setBinding("author", author);
             return q.evaluate();
         } catch (MalformedQueryException ex) {
@@ -307,7 +307,7 @@ public class Redi {
         }
         try {
             connection.begin();
-            connection.add(dataset, vf.createURI(RediRepository.CLUSTERS_CONTEXT));
+            connection.add(dataset, vf.createURI(conn.getClusterGraph()));
         } catch (RepositoryException ex) {
             log.error("", ex);
         } finally {
@@ -330,7 +330,7 @@ public class Redi {
                     + "    foaf:publications ?p."
                     + "}}";//}";
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
-            q.setBinding("graph", vf.createURI(RediRepository.DEFAULT_CONTEXT));
+            q.setBinding("graph", vf.createURI(conn.getContext()));
             q.setBinding("author", author);
             TupleQueryResult result = q.evaluate();
             while (result.hasNext()) {
@@ -383,7 +383,7 @@ public class Redi {
             }
             try {
                 connection.begin();
-                connection.add(dataset, vf.createURI(RediRepository.CLUSTERS_CONTEXT));
+                connection.add(dataset, vf.createURI(conn.getClusterGraph()));
             } catch (RepositoryException ex) {
                 log.error("", ex);
             } finally {
@@ -408,7 +408,7 @@ public class Redi {
 
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
             q.setBinding("cl", vf.createURI(cl));
-            q.setBinding("graphCl", vf.createURI(RediRepository.CLUSTERS_CONTEXT));
+            q.setBinding("graphCl", vf.createURI(conn.getClusterGraph()));
             TupleQueryResult result = q.evaluate();
             while (result.hasNext()) {
                 BindingSet res = result.next();
@@ -478,15 +478,15 @@ public class Redi {
                     + "}";
 
             Update q = connection.prepareUpdate(QueryLanguage.SPARQL, deletequery1);
-            q.setBinding("graphCl", vf.createURI(RediRepository.CLUSTERS_CONTEXT));
+            q.setBinding("graphCl", vf.createURI(conn.getClusterGraph()));
             q.execute();
 
             Update q2 = connection.prepareUpdate(QueryLanguage.SPARQL, deletequery2);
-            q2.setBinding("graphCl", vf.createURI(RediRepository.CLUSTERS_CONTEXT));
+            q2.setBinding("graphCl", vf.createURI(conn.getClusterGraph()));
             q2.execute();
 
             Update q3 = connection.prepareUpdate(QueryLanguage.SPARQL, deletequery3);
-            q3.setBinding("graphCl", vf.createURI(RediRepository.CLUSTERS_CONTEXT));
+            q3.setBinding("graphCl", vf.createURI(conn.getClusterGraph()));
             q3.execute();
             log.info("Delete succesful");
 
@@ -509,7 +509,7 @@ public class Redi {
             
             TupleQuery q = connection.prepareTupleQuery(QueryLanguage.SPARQL, query);
             q.setBinding("cl", vf.createURI(uri));
-            q.setBinding("graphCl", vf.createURI(RediRepository.CLUSTERS_CONTEXT));
+            q.setBinding("graphCl", vf.createURI(conn.getClusterGraph()));
             TupleQueryResult result = q.evaluate();
             while (result.hasNext()) {
                 BindingSet res = result.next();

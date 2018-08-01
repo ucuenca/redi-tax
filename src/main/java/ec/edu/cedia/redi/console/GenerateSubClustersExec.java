@@ -20,12 +20,13 @@ import org.apache.commons.cli.HelpFormatter;
 import org.openrdf.repository.RepositoryException;
 import subClasification.SubClassificationCortical;
 
+
 /**
  *
  * @author joe
  */
 public class GenerateSubClustersExec {
-
+public  static final int REPOSITORY_OPTION = 0; // 0 REDICLON - 1 KIMUK
     /**
      * @param args the command line arguments
      */
@@ -39,7 +40,7 @@ public class GenerateSubClustersExec {
             if (cmd.hasOption("help")){
                 showHelp("Subclusters",options);
             }
-            if ( cmd.hasOption("delete") ) {
+            else if ( cmd.hasOption("delete") ) {
                // showHelp("generateGroups", options); 
             RediRepository rp = RediRepository.getInstance();
             Redi r = new Redi(rp);
@@ -58,12 +59,13 @@ public class GenerateSubClustersExec {
                
                if (cmd.hasOption("keyandex")) {
                   key = Integer.parseInt(cmd.getOptionValue("keyandex").trim());
-                 if (key != 2){
-                 key = 1;
+                 if (key < 0 || key > 3 ){
+                  showHelp("Subclusters",options);
+                  return;
                  }
                }
                
-               SubClassificationCortical.executeSubGroup (paramfilter , saved , key);
+               SubClassificationCortical.executeSubGroup (paramfilter , saved , key, REPOSITORY_OPTION);
             }
         } catch (ParseException ex) {
             showHelp("Subclusters",options);
@@ -106,7 +108,7 @@ public class GenerateSubClustersExec {
                 .required(false)
                 .longOpt("keyandex")
                 .hasArg(true)
-                .desc("Select Yandex keyword (1 or 2).")
+                .desc("Select Yandex keyword (1 , 2 , 3).")
                 .build();
           final Option help = Option.builder("help")
                 .required(false)
