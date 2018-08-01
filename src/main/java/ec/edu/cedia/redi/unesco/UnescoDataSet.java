@@ -126,7 +126,7 @@ public class UnescoDataSet {
         try {
             fin = new FileInputStream(PATH);
             ObjectInputStream ois = new ObjectInputStream(fin);
-            return (List<UnescoHierarchy>) ois.readObject();
+            return ((List<UnescoHierarchy>) ois.readObject());
         } catch (IOException | ClassNotFoundException ex) {
             log.error("Cannot read list.", ex);
         } finally {

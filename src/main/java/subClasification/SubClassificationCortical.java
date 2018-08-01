@@ -7,12 +7,14 @@ package subClasification;
 
 import ec.edu.cedia.redi.Author;
 import ec.edu.cedia.redi.Dbpedia;
-import ec.edu.cedia.redi.DbpediaRepository;
+
+import ec.edu.cedia.redi.repository.DbpediaRepository;
 import ec.edu.cedia.redi.KimukRepository;
 import ec.edu.cedia.redi.NodoDbpedia;
 import ec.edu.cedia.redi.Redi;
-import ec.edu.cedia.redi.RediRepository;
-import ec.edu.cedia.redi.Repositories;
+import ec.edu.cedia.redi.repository.RediRepository;
+import ec.edu.cedia.redi.repository.Repositories;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
@@ -89,7 +91,7 @@ public class SubClassificationCortical {
                 log.info("Cluster: " + cl);
                 // if (true){
                 if (!filter || !r.askSubCluster(cl)) {
-                    List<String> total = new ArrayList();
+                    List<String> total = new ArrayList<>();
                     // List<Author> authors = r.getAuthorsbyCluster("http://skos.um.es/unesco6/1203");
                     List<Author> authors = r.getAuthorsbyCluster(cl);
                     System.out.print(authors);
@@ -129,8 +131,8 @@ public class SubClassificationCortical {
                         System.out.print(entities);
                         // Map <String,String> valid = new HashMap ();
                         if (!entities.isEmpty()) {
-                            List<String> valid = new ArrayList();
-                            List<NodoDbpedia> nd = new ArrayList();
+                            List<String> valid = new ArrayList<>();
+                            List<NodoDbpedia> nd = new ArrayList<>();
                             for (Map.Entry<String, String> mdp : entities.entrySet()) {
                                 if (!db.isCorrectType(mdp.getValue())) {
                                     NodoDbpedia aux = testacademic(mdp.getKey(), mdp.getValue(), db);
@@ -257,7 +259,7 @@ public class SubClassificationCortical {
 
         // sorting HashMap by values using comparator
         Collections.sort(listOfEntries, valueComparator);
-        List<String> auxlist = new ArrayList();
+        List<String> auxlist = new ArrayList<>();
         int count = 0;
         for (Map.Entry<String, Integer> e : listOfEntries) {
             System.out.println(e.getKey() + "-" + e.getValue());
@@ -330,7 +332,7 @@ public class SubClassificationCortical {
             // String [] kauthor = a.getKeywords().split(",");
             String[] kauthor = all.split(",");
             System.out.println("Author " + a.getURI() + "---");
-            Map<String, NodoDbpedia> finalclusters = new HashMap();
+            Map<String, NodoDbpedia> finalclusters = new HashMap<>();
             for (String k : kauthor) {
                 actual++;
                 // System.out.println ("K: "+k);
@@ -408,7 +410,7 @@ public class SubClassificationCortical {
 
     private static List<String> getrelatedkey(List<String> subList, String key, Double min) {
         Preprocessing p = Preprocessing.getInstance();
-        List<String> mostrelevantk = new ArrayList();
+        List<String> mostrelevantk = new ArrayList<>();
         for (String mk : subList) {
             //  if (mk.equals("SCP-ECG") ){continue;}
             System.out.print(mk + "PROCESSING");
@@ -515,7 +517,7 @@ public class SubClassificationCortical {
         System.out.println("SECOND CHANCE");
         //System.out.println (valid);
         System.out.println(nd2.getOrigin());
-        List<NodoDbpedia> candidate = new ArrayList();
+        List<NodoDbpedia> candidate = new ArrayList<>();
         if (nd2.getBroader() != null && nd2.getBroader().size() < 7) {
 
             for (NodoDbpedia n : nd2.getBroader()) {
@@ -554,7 +556,7 @@ public class SubClassificationCortical {
 
     private static Map<String, NodoDbpedia> completeTopicCluster(String topics, Map<String, NodoDbpedia> finalclusters) {
         String[] topicslist = getRelevantTopics(topics.split(","));
-        Map<String, NodoDbpedia> newmap = new HashMap();
+        Map<String, NodoDbpedia> newmap = new HashMap<>();
         for (String tp : topicslist) {
             try {
                 String uri = "http://ucuenca.edu.ec/resource/subcluster#" + URLEncoder.encode(tp.trim().replace(" ", "_"), "UTF-8");
@@ -570,7 +572,7 @@ public class SubClassificationCortical {
     }
 
     private static String[] getRelevantTopics(String[] split) {
-        Map<String, Integer> aux = new HashMap();
+        Map<String, Integer> aux = new HashMap<>();
         for (String topic : split) {
             for (String comparetopic : split) {
                 if (comparetopic.contains(topic)) {

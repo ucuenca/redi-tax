@@ -17,6 +17,7 @@
 package ec.edu.cedia.redi;
 
 
+import ec.edu.cedia.redi.repository.Repositories;
 import ec.edu.cedia.redi.unesco.UnescoNomeclatureConnection;
 import java.util.HashMap;
 import java.util.Map;

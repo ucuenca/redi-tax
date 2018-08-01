@@ -6,6 +6,7 @@
 
 package ec.edu.cedia.redi.console;
 
+import ec.edu.cedia.redi.KimukRepository;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.cli.CommandLine;
@@ -15,7 +16,8 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import ec.edu.cedia.redi.Redi;
-import ec.edu.cedia.redi.RediRepository;
+import ec.edu.cedia.redi.repository.RediRepository;
+import ec.edu.cedia.redi.repository.Repositories;
 import org.apache.commons.cli.HelpFormatter;
 import org.openrdf.repository.RepositoryException;
 import subClasification.SubClassificationCortical;
@@ -42,7 +44,13 @@ public  static final int REPOSITORY_OPTION = 0; // 0 REDICLON - 1 KIMUK
             }
             else if ( cmd.hasOption("delete") ) {
                // showHelp("generateGroups", options); 
-            RediRepository rp = RediRepository.getInstance();
+            Repositories rp;
+            if (REPOSITORY_OPTION == 0){
+            rp = RediRepository.getInstance();
+            }else {
+            rp = KimukRepository.getInstance();
+            }
+          
             Redi r = new Redi(rp);
             r.deleteSubclusters(); 
             }else {

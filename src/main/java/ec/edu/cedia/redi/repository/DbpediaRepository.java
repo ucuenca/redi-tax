@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package ec.edu.cedia.redi;
+package ec.edu.cedia.redi.repository;
 
 import java.util.HashMap;
 import java.util.Map;

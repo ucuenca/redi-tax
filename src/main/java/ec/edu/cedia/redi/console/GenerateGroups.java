@@ -18,8 +18,11 @@ package ec.edu.cedia.redi.console;
 
 import corticalClasification.KnowledgeAreas;
 import ec.edu.cedia.redi.Author;
+import ec.edu.cedia.redi.KimukRepository;
 import ec.edu.cedia.redi.Redi;
-import ec.edu.cedia.redi.RediRepository;
+import static ec.edu.cedia.redi.console.GenerateSubClustersExec.REPOSITORY_OPTION;
+import ec.edu.cedia.redi.repository.RediRepository;
+import ec.edu.cedia.redi.repository.Repositories;
 import ec.edu.cedia.redi.unesco.UnescoDataSet;
 import ec.edu.cedia.redi.unesco.UnescoNomeclatureConnection;
 import ec.edu.cedia.redi.unesco.model.UnescoHierarchy;
@@ -46,18 +49,20 @@ public class GenerateGroups {
 
     private static final Logger log = LoggerFactory.getLogger(GenerateGroups.class);
     private static int offset = -1, limit = -1;
+    public  static final int REPOSITORY_OPTION = 0; // 0 REDICLON - 1 KIMUK
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) throws Exception {
-
-        final CommandLineParser parser = new DefaultParser();
+           final CommandLineParser parser = new DefaultParser();
+           
+         
 
         final Options options = extractAreasOptions();
         CommandLine cmd;
         try {
-//            args = new String[]{"-t=4", "-o=118", "-l=100"};
+//            args = new String[]{"-t=4", "-o=8800", "-l=1", "-f"};
 //            args = new String[]{"-t=3", "f"};
 //            args = new String[]{"f"};
 //            args = new String[]{"-t=3"};
@@ -79,7 +84,7 @@ public class GenerateGroups {
                     offset = Integer.parseInt(cmd.getOptionValue("offset").trim());
                     limit = Integer.parseInt(cmd.getOptionValue("limit").trim());
                 }
-                extractAreas(threads, filter);
+                extractAreas(threads, filter, REPOSITORY_OPTION );
             } else {
                 showHelp("generateGroups", options);
             }
@@ -142,8 +147,15 @@ public class GenerateGroups {
         return options;
     }
 
-    private static void extractAreas(int threads, boolean filterAuthorsProcessed) throws Exception {
-        try (RediRepository rediRepository = RediRepository.getInstance();) {
+    private static void extractAreas(int threads, boolean filterAuthorsProcessed , int rep) throws Exception {
+          
+             Repositories rediRepository;
+            if (rep  == 0){
+            rediRepository = RediRepository.getInstance();
+            }else {
+            rediRepository = KimukRepository.getInstance();
+            }
+    
             final Redi redi = new Redi(rediRepository);
             final Iterator<Author> authors;
             if (offset != -1 && limit != -1) {
@@ -159,7 +171,7 @@ public class GenerateGroups {
                 pool.execute(new AreasExtractor(author, dataset));
             }
             pool.shutdown();
-        }
+        
     }
 
     private static void inspectAuthor(String authorUri) throws Exception {

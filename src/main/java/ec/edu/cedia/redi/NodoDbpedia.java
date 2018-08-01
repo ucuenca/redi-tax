@@ -81,7 +81,7 @@ public class NodoDbpedia {
     
     public NodoDbpedia(String uri) {
            this.uri = uri;
-           academic = new ArrayList ();
+           academic = new ArrayList<>();
     }
     
     

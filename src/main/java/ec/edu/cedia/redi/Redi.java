@@ -16,6 +16,9 @@
  */
 package ec.edu.cedia.redi;
 
+import ec.edu.cedia.redi.repository.Repositories;
+import ec.edu.cedia.redi.repository.DbpediaRepository;
+import ec.edu.cedia.redi.repository.RediRepository;
 import corticalClasification.AreaUnesco;
 import ec.edu.cedia.redi.unesco.UnescoDataSet;
 import ec.edu.cedia.redi.unesco.model.UnescoHierarchy;
