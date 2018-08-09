@@ -103,8 +103,11 @@ public class Redi {
             q.setBinding("authors", vf.createURI(conn.getAuthorGraph()));
             q.setBinding("author", vf.createURI(uri));
             TupleQueryResult result = q.evaluate();
+            log.info("Query: " + q + "query"+query);
             if (result.hasNext()) {
                 BindingSet variables = result.next();
+                 log.info("Resp: " + variables);
+                 log.info("Resp2: " + variables.getBindingNames().toString());
                 URI author = (URI) variables.getBinding("a").getValue();
                 log.info("Getting subjects of author: " + author);
 

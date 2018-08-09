@@ -49,7 +49,7 @@ public class GenerateGroups {
 
     private static final Logger log = LoggerFactory.getLogger(GenerateGroups.class);
     private static int offset = -1, limit = -1;
-    public  static final int REPOSITORY_OPTION = 0; // 0 REDICLON - 1 KIMUK
+    public  static final int REPOSITORY_OPTION = 1; // 0 REDICLON - 1 KIMUK
 
     /**
      * @param args the command line arguments
@@ -57,7 +57,12 @@ public class GenerateGroups {
     public static void main(String[] args) throws Exception {
            final CommandLineParser parser = new DefaultParser();
            
-         
+           Repositories rediRepository;
+            if (REPOSITORY_OPTION  == 0){
+            rediRepository = RediRepository.getInstance();
+            }else {
+            rediRepository = KimukRepository.getInstance();
+            }
 
         final Options options = extractAreasOptions();
         CommandLine cmd;
@@ -76,7 +81,7 @@ public class GenerateGroups {
 
             if (cmd.hasOption("author")) {
                 String authorURI = cmd.getOptionValue("author");
-                inspectAuthor(authorURI);
+                inspectAuthor(authorURI , rediRepository);
             } else if (cmd.hasOption("threads")) {
                 int threads = Integer.parseInt(cmd.getOptionValue("threads").trim());
                 boolean filter = cmd.hasOption("filter-authors");
@@ -84,7 +89,7 @@ public class GenerateGroups {
                     offset = Integer.parseInt(cmd.getOptionValue("offset").trim());
                     limit = Integer.parseInt(cmd.getOptionValue("limit").trim());
                 }
-                extractAreas(threads, filter, REPOSITORY_OPTION );
+                extractAreas(threads, filter, rediRepository );
             } else {
                 showHelp("generateGroups", options);
             }
@@ -147,14 +152,9 @@ public class GenerateGroups {
         return options;
     }
 
-    private static void extractAreas(int threads, boolean filterAuthorsProcessed , int rep) throws Exception {
+    private static void extractAreas(int threads, boolean filterAuthorsProcessed , Repositories rediRepository) throws Exception {
           
-             Repositories rediRepository;
-            if (rep  == 0){
-            rediRepository = RediRepository.getInstance();
-            }else {
-            rediRepository = KimukRepository.getInstance();
-            }
+     
     
             final Redi redi = new Redi(rediRepository);
             final Iterator<Author> authors;
@@ -174,8 +174,8 @@ public class GenerateGroups {
         
     }
 
-    private static void inspectAuthor(String authorUri) throws Exception {
-        try (RediRepository rediRepository = RediRepository.getInstance();) {
+    private static void inspectAuthor(String authorUri , Repositories rediRepository) throws Exception {
+        
             final Redi redi = new Redi(rediRepository);
             final Author author = redi.getAuthor(authorUri);
             final List<UnescoHierarchy> dataset = UnescoDataSet.getInstance().getDataset();
@@ -183,7 +183,7 @@ public class GenerateGroups {
             ExecutorService pool = Executors.newFixedThreadPool(1);
             pool.execute(new AreasExtractor(author, dataset, true));
             pool.shutdown();
-        }
+        
     }
 
     private static class AreasExtractor implements Runnable {
