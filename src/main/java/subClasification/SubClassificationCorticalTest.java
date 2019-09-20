@@ -45,36 +45,199 @@ import plublication.Preprocessing;
  *
  * @author joe
  */
-public class SubClassificationCortical {
+public class SubClassificationCorticalTest {
 
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(SubClassificationCortical.class);
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(SubClassificationCorticalTest.class);
    
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) throws InterruptedException, IOException {
-          executeSubGroup(false, false , 1 , 0 , "");
+         // executeSubGroup(false, false , 1 , 0 , "");
      //   String [] years = {"2010","2011","2012","2013","2014","2015","2016","2017","2018","2019"};
      //   executeSubGroup (false , false , 1, 0 , years);
        // executeSubGroup(true, true , 2 , 0);
       //  csvoutput ();
+      // executeSubGroup(false, false , 1 , 0 , "");
+      //cluster (getclusterfile ());
+      //cluster (getclusterfileA ());
+      cluster (getclusterfileB ());
     }
     
-    public static void csvoutput () 
-    {   Utils n = new Utils ();
-        try {
-        Repositories   rp = RediRepository.getInstance();
-        Redi r = new Redi(rp);
-        System.out.print ("Consultando");
-        List<Author> authors = r.getAuthorsbyCluster("http://skos.um.es/unesco6/1203");
-        System.out.print (authors.size()+"autores");
-        System.out.print ("Escribiendo");
-        n.writeToCSV((ArrayList<Author>) authors);
-        
-        } catch (RepositoryException ex) {
-            Logger.getLogger(SubClassificationCortical.class.getName()).log(Level.SEVERE, null, ex);
+ 
+    
+    
+    public static void cluster ( HashMap <String, List<documentCl>> map) {
+           HashMap <String,HashMap<String, Integer>> hm = new HashMap ();
+        for ( String k : map.keySet() ) {
+           System.out.println ("CLUSTER:"+k);
+          try {
+            List<String> valid = oneclusterproc (k ,map.get(k));
+           /*   List<clusterLabel> cll = new ArrayList ();
+                      for (String v : valid) {
+                        clusterLabel cl = new clusterLabel (v, 0);
+                        cll.add(cl);
+                      }*/
+           
+           
+                
+            
+             
+            // List <String> authorUri = indexDoc ( map.get(k)) ;
+                List <String> authorUri = indexAuth ( map.get(k)) ;
+               /*for (  documentCl d :map.get(k)) {
+                 for (String aut : d.getAuthors()){ 
+                     if (!authorUri.contains(aut))
+                     {
+                        authorUri.add(aut);
+                     }
+                 }
+               }*/
+             
+             
+                for  (String aut : authorUri) {
+                   HashMap<String, Integer> hms;
+                  
+                     if (hm.containsKey(aut)){
+                       
+                       hms =  hm.get(aut);
+                                             } 
+                     else {
+                         hms =  new HashMap ();
+                       }
+
+                       for (String v :valid) {
+                         
+                           int count = hms.getOrDefault(v, 0); 
+                            hms.put(v, count + 1); 
+                         
+                       }
+                       //list.addAll(valid);
+                       
+                    hm.put(aut, hms);
+                      
+                }
+                  
+             verdata (hm);
+             
+            
+          } catch (RepositoryException ex) {
+            Logger.getLogger(SubClassificationCorticalTest.class.getName()).log(Level.SEVERE, null, ex);
+          }
         }
+    
+    
+    }
+    
+    private  static List <String> indexDoc ( List<documentCl> map) {
+       List <String> authorUri = new ArrayList (); 
+               for (  documentCl d : map) {
+                 for (String aut : d.getAuthors()){ 
+                     if (!authorUri.contains(aut))
+                     {
+                        authorUri.add(aut);
+                     }
+                 }
+               }
+               return authorUri;
+    }
+    
+      private  static List <String> indexAuth ( List<documentCl> map) {
+       List <String> authorUri = new ArrayList (); 
+               for (  documentCl d : map) {
+                   String aut =  d.getId();
+                     if (!authorUri.contains(aut))
+                     {
+                        authorUri.add(aut);
+                     }
+                 
+               }
+               return authorUri;
+    }
+    
+     private static void verdata(HashMap<String, HashMap<String, Integer>> hm) {
+       for ( String k : hm.keySet()) {
+         System.out.println ("Author-"+k);
+         hm.get(k).entrySet().stream().sorted(Map.Entry.comparingByValue()).forEach(System.out::println);
+          
+       }
+     }
+    
+    public static List<String>  oneclusterproc (String c , List<documentCl> map) throws RepositoryException {
+       List<String> total = new ArrayList<>();
+      for  (documentCl d : map){
+        System.out.println (d.getId()+"-"+d.getKeywords()+"-"+d.getAuthors());
+        List<String> stringList = new ArrayList<String>(Arrays.asList(d.getKeywords().split(";")));
+        total.addAll(stringList);
+      }
+       DbpediaRepository drep = DbpediaRepository.getInstance();
+            Dbpedia db = new Dbpedia(drep);
+            Preprocessing p = Preprocessing.getInstance();
+            
+       
       
+       Object objdbpedia = null;
+                    if (!total.isEmpty()) {
+                    
+                    List<String> topk = topkeyword(total, 1);
+
+                    int num = 0;
+                    if (topk.size() > 20) {
+                        num = 20;
+                    } else {
+                        num = topk.size();
+                    }
+                    System.out.print("Dbpedia Entities");
+                     objdbpedia = p.detectDbpediaEntitiestoArray(String.join(", ", topk.subList(0, num)));
+                    }
+                    if (objdbpedia != null) {
+                        Map<String, String> entities = (Map<String, String>) objdbpedia;
+                        System.out.print(entities);
+                        // Map <String,String> valid = new HashMap ();
+                        if (!entities.isEmpty()) {
+                            List<String> valid = new ArrayList<>();
+                            List<NodoDbpedia> nd = new ArrayList<>();
+                            for (Map.Entry<String, String> mdp : entities.entrySet()) {
+                                if (!db.isCorrectType(mdp.getValue())) {
+                                    NodoDbpedia aux = testacademic(mdp.getKey(), mdp.getValue(), db);
+                                    if (aux != null) {
+                                        nd.add(aux);
+
+                                        if (aux != null && !aux.getAcademic().isEmpty()) {
+                                            for (NodoDbpedia ndb : aux.getAcademic()) {
+                                                valid.add(ndb.getUri());
+                                            }
+                                        }
+                                    }
+
+                                }
+                            }
+
+                            for (NodoDbpedia nd2 : nd) {
+
+                                if (nd2.getAcademic() == null || nd2.getAcademic().isEmpty()) {
+                                    nd2 = secondchance(nd2, valid, db);
+                                    System.out.println("Segunda Pasada");
+                                }
+
+                                for (NodoDbpedia n : nd2.getAcademic()) {
+                                    System.out.println(nd2.getOrigin() + "-" + nd2.getUri() + "=" + n.getUri() + "-" + n.getNameEn());
+
+                                }
+
+                            } 
+                            
+                             
+                               for (String val:valid) {
+                             System.out.println ("Resultados "+c);
+                             System.out.println (val);
+                            }
+                              return valid; 
+                                                            
+                        }
+                    }
+      return null;
+
     }
 
     public static void test(Redi r, Dbpedia db, Preprocessing p) throws RepositoryException, IOException {
@@ -96,6 +259,70 @@ public class SubClassificationCortical {
         List<NodoDbpedia> l = db.isAcademicDbpedia("http://dbpedia.org/resource/Semantic_Web");
         System.out.println(l.get(0).getNameEn() + l.get(0).getNameEs());
 
+    }
+    
+    public static HashMap <String, List<documentCl>>  getclusterfile () {
+     Utils uti = new Utils (); 
+     List<List<String>> l = uti.readToCSV("/home/joe/TestClust/data/salida.csv");
+     HashMap <String, List<documentCl>> map = new HashMap ();
+    
+     for ( List<String> list :  l) {
+       documentCl d = new documentCl (list.get(1), list.get(0) , list.get(3).split(";"), list.get(2)); 
+      // System.out.print (list.get(1) +"-"+list.get(0));
+              if (map.containsKey(d.getCluster())){
+                 map.get(d.getCluster()).add(d);
+              }else {
+                   List<documentCl> documents = new ArrayList ();
+                   documents.add(d);
+                   map.put(d.getCluster(), documents);
+                   
+        }
+     }
+     
+     return map;
+    }
+    
+    
+     public static HashMap <String, List<documentCl>>  getclusterfileA () {
+     Utils uti = new Utils (); 
+     List<List<String>> l = uti.readToCSV("/home/joe/TestClust/data/salidaAut.csv");
+     HashMap <String, List<documentCl>> map = new HashMap ();
+    
+     for ( List<String> list :  l) {
+       documentCl d = new documentCl (list.get(1), list.get(0) ,null , list.get(2)); 
+      // System.out.print (list.get(1) +"-"+list.get(0));
+              if (map.containsKey(d.getCluster())){
+                 map.get(d.getCluster()).add(d);
+              }else {
+                   List<documentCl> documents = new ArrayList ();
+                   documents.add(d);
+                   map.put(d.getCluster(), documents);
+                   
+        }
+     }
+     
+     return map;
+    }
+     
+       public static HashMap <String, List<documentCl>>  getclusterfileB () {
+     Utils uti = new Utils (); 
+     List<List<String>> l = uti.readToCSV("/home/joe/TestClust/data/salidaAut2.csv");
+     HashMap <String, List<documentCl>> map = new HashMap ();
+      
+     for ( List<String> list :  l) {
+       documentCl d = new documentCl (list.get(0), list.get(1)  ,null , list.get(2)); 
+      // System.out.print (list.get(1) +"-"+list.get(0));
+              if (map.containsKey(d.getCluster())){
+                 map.get(d.getCluster()).add(d);
+              }else {
+                   List<documentCl> documents = new ArrayList ();
+                   documents.add(d);
+                   map.put(d.getCluster(), documents);
+                   
+        }
+     }
+     
+     return map;
     }
     
     public static void executeSubGroup(Boolean filter, Boolean Save , int key , int rep , String [] years) {
@@ -140,8 +367,8 @@ public class SubClassificationCortical {
                     // List<Author> authors = r.getAuthorsbyCluster("http://skos.um.es/unesco6/1203");
                      //BORRAR
                     //List<Author> authors = r.getPublicationsbyClusterbyYear("",year);      //Año                    
-                      List<Author> authors =   r.getPublicationsbyClusterandAuthors("");  // Test           
-                    // List<Author> authors = r.getAuthorsbyCluster(cl); // Normal
+                     // List<Author> authors =   r.getPublicationsbyClusterandAuthors("");  // Test           
+                     List<Author> authors = r.getAuthorsbyCluster(cl); // Normal
                     System.out.print("Numero de autores encontrados "+authors.size());
                      Utils uti = new Utils ();
                      uti.writeToCSVRaw((ArrayList<Author>) authors , "Raw"); // Test
@@ -161,8 +388,8 @@ public class SubClassificationCortical {
                     }
                     
                     // uti.writeToCSV((ArrayList<Author>) authors); 
-                      uti.writeToCSVRaw((ArrayList<Author>) authors , "autProc"); 
-                     
+                      uti.writeToCSVRaw((ArrayList<Author>) authors , "AutoresKeyP"); 
+               
                     System.out.println("FINISH PREPRO");
                     
 
@@ -177,8 +404,8 @@ public class SubClassificationCortical {
                     List<String> topk = topkeyword(total, 1);
 
                     int num = 0;
-                    if (topk.size() > 50) {
-                        num = 50;
+                    if (topk.size() > 10) {
+                        num = 10;
                     } else {
                         num = topk.size();
                     }
@@ -221,8 +448,9 @@ public class SubClassificationCortical {
                                 }
 
                             }
+                         
 
-                            subClusterAuthor(authors, nd, cl, r, Save);
+                            //subClusterAuthor(authors, nd, cl, r, Save);
                            // subClusterAuthorYear (authors, nd, cl, r, Save , year);
                         }
                     } else {
@@ -246,7 +474,7 @@ public class SubClassificationCortical {
             }
         } catch (RepositoryException ex) {
 
-            Logger.getLogger(SubClassificationCortical.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(SubClassificationCorticalTest.class.getName()).log(Level.SEVERE, null, ex);
 
         }
     }
@@ -291,7 +519,7 @@ public class SubClassificationCortical {
             return kt;
 
         } catch (IOException ex) {
-            Logger.getLogger(SubClassificationCortical.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(SubClassificationCorticalTest.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return null;
@@ -390,16 +618,22 @@ public class SubClassificationCortical {
 
     
     public static List<String> topkeyword(List<String> list, int min) {
+ 
         Map<String, Integer> mp = new HashMap<>();
-        list.stream().forEach((l) -> {
-            if (mp.containsKey(l.trim())) {
+       // list.stream().forEach((l) -> {
+         for  (String l :list) {
+       System.out.println (l);
+        String lkey = l.trim();
+            if (l!= null &&  lkey.length() > 0 && mp.containsKey(lkey)) {
 
-                mp.put(l.trim(), ((Integer) mp.get(l)) + 1);
-            } else {
-                mp.put(l.trim(), 0);
+                mp.put(lkey, (mp.get(lkey)) + 1);
+            } else if (lkey!= null && lkey.length() > 0) {
+                mp.put(lkey, 0);
             }
-        });
+         }
+     //   });
         return orderMap(mp, min);
+       // return null;
 
     }
 
@@ -640,7 +874,7 @@ public class SubClassificationCortical {
                 }
             } catch (IOException e) {
 
-                Logger.getLogger(SubClassificationCortical.class.getName()).log(Level.SEVERE, null, e);
+                Logger.getLogger(SubClassificationCorticalTest.class.getName()).log(Level.SEVERE, null, e);
                 // return null;
             }
         }
@@ -715,7 +949,7 @@ public class SubClassificationCortical {
 
             // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         } catch (RepositoryException ex) {
-            Logger.getLogger(SubClassificationCortical.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(SubClassificationCorticalTest.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
     }
@@ -751,7 +985,7 @@ public class SubClassificationCortical {
             try {
                 nd2.setAcademic(db.getLabels(nd2.getUri()));
             } catch (RepositoryException ex) {
-                Logger.getLogger(SubClassificationCortical.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(SubClassificationCorticalTest.class.getName()).log(Level.SEVERE, null, ex);
             }
         } else {
             nd2.setAcademic(candidate);
@@ -772,7 +1006,7 @@ public class SubClassificationCortical {
                 newmap.put(uri, naca);
                 System.out.println("Nuevo" + uri);
             } catch (UnsupportedEncodingException ex) {
-                Logger.getLogger(SubClassificationCortical.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(SubClassificationCorticalTest.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         return newmap;
@@ -796,6 +1030,12 @@ public class SubClassificationCortical {
 
         return ordertopic.size() > 5 ? ordertopic.subList(0, 5).toArray(new String[0]) : ordertopic.toArray(new String[0]);
     }
+
+  private static void asignarCl( HashMap <String,HashMap<String,Integer>> hm) {
+    
+  }
+
+ 
     
     
      public Boolean validateSubcluster (String uri ) {

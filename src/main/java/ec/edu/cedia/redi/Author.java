@@ -27,6 +27,15 @@ public class Author {
     private  URI uri;
     private  String keywords;
     private  String topics; 
+    private  String Others; 
+
+  public String getOthers() {
+    return Others;
+  }
+
+  public void setOthers(String Others) {
+    this.Others = Others;
+  }
 
     public String getTopics() {
         return topics;

@@ -20,7 +20,6 @@ import corticalClasification.KnowledgeAreas;
 import ec.edu.cedia.redi.Author;
 import ec.edu.cedia.redi.KimukRepository;
 import ec.edu.cedia.redi.Redi;
-import static ec.edu.cedia.redi.console.GenerateSubClustersExec.REPOSITORY_OPTION;
 import ec.edu.cedia.redi.repository.RediRepository;
 import ec.edu.cedia.redi.repository.Repositories;
 import ec.edu.cedia.redi.unesco.UnescoDataSet;
@@ -40,6 +39,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import plublication.Preprocessing;
 
 /**
  *
@@ -49,12 +49,17 @@ public class GenerateGroups {
 
     private static final Logger log = LoggerFactory.getLogger(GenerateGroups.class);
     private static int offset = -1, limit = -1;
-    public  static final int REPOSITORY_OPTION = 1; // 0 REDICLON - 1 KIMUK
+   // public  static final int REPOSITORY_OPTION = 0; // 0 REDICLON - 1 KIMUK
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) throws Exception {
+          int REPOSITORY_OPTION;
+         
+          Preprocessing p = Preprocessing.getInstance();
+         REPOSITORY_OPTION = Integer.parseInt(p.readKeys ("config.properties","app.source"));
+        
            final CommandLineParser parser = new DefaultParser();
            
            Repositories rediRepository;
@@ -63,6 +68,7 @@ public class GenerateGroups {
             }else {
             rediRepository = KimukRepository.getInstance();
             }
+            
 
         final Options options = extractAreasOptions();
         CommandLine cmd;
@@ -73,7 +79,12 @@ public class GenerateGroups {
 //            args = new String[]{"-t=3"};
 //            args = new String[]{"-a=https://redi.cedia.edu.ec/resource/authors/UCUENCA/oai-pmh/SAQUICELA_GALARZA__VICTOR_HUGO"};
             cmd = parser.parse(options, args);
-
+               Redi redi = new Redi(rediRepository);
+               if (cmd.hasOption("delete")) { 
+               redi.deleteClusters(); 
+               
+               }
+      
             if ((cmd.hasOption("offset") && !cmd.hasOption("limit")) || cmd.hasOption("limit") && !cmd.hasOption("offset")) {
                 showHelp("generateGroups", options);
                 return;
@@ -89,6 +100,7 @@ public class GenerateGroups {
                     offset = Integer.parseInt(cmd.getOptionValue("offset").trim());
                     limit = Integer.parseInt(cmd.getOptionValue("limit").trim());
                 }
+          
                 extractAreas(threads, filter, rediRepository );
             } else {
                 showHelp("generateGroups", options);
@@ -143,12 +155,19 @@ public class GenerateGroups {
                 .hasArg(true)
                 .desc("Build groups for author and print in stdo.")
                 .build();
+       final Option deleteOption = Option.builder("d")
+                .required(false)
+                .longOpt("delete")
+                .hasArg(false)
+                .desc("delete clusters of authors")
+                .build();
         final Options options = new Options();
         options.addOption(threadsOption);
         options.addOption(offsetOption);
         options.addOption(limitOption);
         options.addOption(filterAuthorsOption);
         options.addOption(authorOption);
+        options.addOption(deleteOption);
         return options;
     }
 

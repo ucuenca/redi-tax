@@ -21,7 +21,7 @@ public class StringUtilsTest {
     public void testKeepUniqueTopics() {
         String str = "Linked Data;Linked data;semantic web;linked data";
         String expResult = "linked data;semantic web";
-        String result = StringUtils.keepUniqueTopics(str);
+        String result = Utils.keepUniqueTopics(str);
         assertEquals(expResult, result);
     }
 
@@ -32,7 +32,7 @@ public class StringUtilsTest {
     public void testCleanString() {
         String str = "Linked Data;Linked data (All);semantic web;linked data";
         String expResult = "linked data;linked data ;semantic web;linked data";
-        String result = StringUtils.cleanString(str);
+        String result = Utils.cleanString(str);
         assertEquals(expResult, result);
     }
 
@@ -45,7 +45,7 @@ public class StringUtilsTest {
                 + "medicina;principios de hardware;inteligencia artificial;ecuador";
         String expResult = "programming languages;linked data;ecuador;computer science;medicine;"
                 + "principles of hardware;artificial intelligence";
-        String result = StringUtils.processTopics(str);
+        String result = Utils.processTopics(str);
         assertEquals(expResult, result);
     }
 }

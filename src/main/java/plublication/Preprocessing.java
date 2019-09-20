@@ -11,7 +11,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.jayway.jsonpath.JsonPath;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
@@ -22,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
@@ -52,6 +56,7 @@ import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sparql.SPARQLRepository;
 import org.openrdf.rio.ParserConfig;
 import org.slf4j.LoggerFactory;
+import subClasification.SubClassificationCortical;
 
 /**
  *
@@ -65,8 +70,10 @@ public class Preprocessing {
     private static Preprocessing instanceService = new Preprocessing();
     private HttpClient httpClient = HttpClients.createDefault();
     int auxk = 0;
+    String [] yandexk;
 
     private Preprocessing() {
+        yandexk = readKeys ("config.properties" , "app.keys").split(";");
     }
 
     public static Preprocessing getInstance() {
@@ -222,20 +229,22 @@ public class Preprocessing {
                 HttpEntity entity = response.getEntity();
 
                 if (entity != null && response.getStatusLine().getStatusCode() == 200) {
+                 
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent(), "UTF-8"))) {
                         String jsonResult = reader.readLine();
                         // Object parserresponse = new JsonParser().parse(jsonResult);
-
+                           // return true;
                         return JsonPath.read(jsonResult, path);
                     } catch (Exception e) {
                         System.out.print("Error Path" + e);
                         return null;
                     }
-                } else if (response.getStatusLine().getStatusCode() == 403) {
+                } else if (response.getStatusLine().getStatusCode() == 403 || response.getStatusLine().getStatusCode() == 429  ) {
                     log.error(response.toString());
+                    httpClient = HttpClients.createDefault();
                     System.out.print ("Change request");
                     return false;
-                }
+                } 
                 else {
                     
                     
@@ -252,6 +261,25 @@ public class Preprocessing {
             }
         }
     }
+    
+    
+    public  String readKeys ( String file ,String field) {
+        
+        Properties prop = new Properties();
+        String fileName = file;
+        InputStream is = null;
+        is = this.getClass().getResourceAsStream("/"+fileName); 
+        try {
+            prop.load(is);
+        } catch (IOException ex) {
+        Logger.getLogger(Preprocessing.class.getName()).log(Level.SEVERE, null, ex);
+        }
+             String  keys = prop.getProperty(field);
+             
+            
+    
+    return keys;
+    }
 
     
      public Object traductor(String palabras) throws IOException { 
@@ -263,9 +291,7 @@ public class Preprocessing {
         String contextEs = "contexto, ";
         String contextEn = "context, ";
         
-        String []  yandexk = {"trnsl.1.1.20180515T220323Z.a01167a60fd15c32.e1f33475375f91802f0e1da270a94bd99b412521",
-            "trnsl.1.1.20180515T220323Z.a01167a60fd15c32.e1f33475375f91802f0e1da270a94bd99b412521",
-            "trnsl.1.1.20180723T205130Z.3c69ff2bec293467.56151bc08ddf7bdc550288f9ca3f7046d6ea5391"};
+        String []  yandexk = this.yandexk;
 
         String urlbase = "https://translate.yandex.net/api/v1.5/tr.json/translate";
         /* HashMap <String, String> param = new HashMap<>();
@@ -317,6 +343,9 @@ public class Preprocessing {
          return null;
       
     }
+    
+    
+    
 
     public Object detectDbpediaEntities(String text) {
 

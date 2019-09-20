@@ -21,19 +21,27 @@ import ec.edu.cedia.redi.repository.Repositories;
 import org.apache.commons.cli.HelpFormatter;
 import org.openrdf.repository.RepositoryException;
 import subClasification.SubClassificationCortical;
-
+import plublication.Preprocessing;
 
 /**
  *
  * @author joe
  */
 public class GenerateSubClustersExec {
-public  static final int REPOSITORY_OPTION = 0; // 0 REDICLON - 1 KIMUK
+//public  static final int REPOSITORY_OPTION = 0; // 0 REDICLON - 1 KIMUK
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-         final CommandLineParser parser = new DefaultParser();
+        //SubClassificationCortical.lamdaCounter();
+       //  SubClassificationCortical.countergrams();
+         int REPOSITORY_OPTION;
+         
+          Preprocessing p = Preprocessing.getInstance();
+         REPOSITORY_OPTION = Integer.parseInt(p.readKeys ("config.properties","app.source"));
+        // SubClassificationCortical.readKeys();
+         
+        final CommandLineParser parser = new DefaultParser();
 
         final Options options = extractSubCLustersOptions();
         CommandLine cmd;
@@ -72,8 +80,8 @@ public  static final int REPOSITORY_OPTION = 0; // 0 REDICLON - 1 KIMUK
                   return;
                  }
                }
-               
-               SubClassificationCortical.executeSubGroup (paramfilter , saved , key, REPOSITORY_OPTION);
+            
+               SubClassificationCortical.executeSubGroup (paramfilter , saved , key, REPOSITORY_OPTION , "");
             }
         } catch (ParseException ex) {
             showHelp("Subclusters",options);
